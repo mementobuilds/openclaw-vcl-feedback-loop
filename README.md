@@ -21,6 +21,13 @@ The polling path is deterministic and cheap. No LLM is required to detect new fe
 
 ---
 
+## Live example
+
+Example:
+<https://vibecodinglist.com/projects/tap-flash-self-improving-game>
+
+---
+
 ## Quick start
 
 If you do not have OpenClaw yet, start here:
@@ -856,6 +863,10 @@ It is especially useful if you want a workflow like:
 > VCL feedback arrives → notify me immediately → I reply OK / HOLD / ASK → only then does an agent implement and deploy → then the system replies in-thread and posts a changelog update linked to the influencing feedback.
 
 ---
+
+## Example
+
+<https://vibecodinglist.com/projects/tap-flash-self-improving-game>
 
 ## License
 
