@@ -42,7 +42,7 @@ They send through **OpenClaw** using `openclaw message send`.
 So for a Telegram-based setup, make sure:
 
 1. Telegram is already connected to OpenClaw
-2. the connected bot/account has already spoken in the destination chat at least once
+2. the connected bot/account can reach the destination chat
 3. you know the target chat or user id if the agent cannot infer it
 4. the loop config includes:
 

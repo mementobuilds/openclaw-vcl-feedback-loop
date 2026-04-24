@@ -42,7 +42,7 @@ The agent should then ask only for the missing inputs, usually:
    - `project_intelligence:write_updates`
 4. Copy the project page URL or note the project id.
 5. Give the agent the API key.
-6. If you want Telegram alerts, connect Telegram to OpenClaw and make sure the connected bot/account has at least one message in the destination chat.
+6. If you want Telegram alerts, connect Telegram to OpenClaw. If the agent cannot infer the destination later, provide the numeric chat id.
 7. If you want full implementation + deploy flow, give the agent access to the target project repo and make sure there is a deploy path it can trigger from CLI.
 
 Fallback: if needed, the user can also copy the **Read insights** curl template from that page.

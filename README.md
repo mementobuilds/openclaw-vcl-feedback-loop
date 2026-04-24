@@ -38,17 +38,13 @@ If you do not have OpenClaw yet, start here:
    - `project_intelligence:write_updates`
 4. If you want Telegram alerts:
    - connect Telegram to OpenClaw first
-   - start at least one chat with the connected bot/account
-   - if alerts should go to a group, add the bot there and make sure there is at least one message in that chat
+   - if alerts should go to a group, add the bot there
+   - if the agent cannot infer the destination, provide the numeric chat id
 5. Make sure the target project itself is reachable by the agent:
    - the source repo exists (GitHub or another accessible git remote)
    - OpenClaw can clone or access that repo
    - there is a deploy path the agent can trigger from CLI after making fixes
-6. Send your OpenClaw agent:
-   - your VCL **project page URL** or **project id**
-   - the **API key**
-   - your Telegram destination, if you want Telegram alerts
-   - the target project repo URL, if you want end-to-end implementation and deploys
+6. Then send your OpenClaw agent a prompt like this:
 
 Example prompt:
 
@@ -169,7 +165,7 @@ This setup sends notifications through **OpenClaw's Telegram routing**, not by t
 That means the important pieces are:
 
 1. OpenClaw already has a Telegram account connected
-2. the connected bot/account has already spoken in the destination chat at least once
+2. the connected bot/account can reach the destination chat
 3. you know the Telegram target chat or user id if the agent cannot infer it automatically
 4. the VCL loop config includes:
    - `channel: telegram`
@@ -207,7 +203,7 @@ If the user wants the setup mostly by chat, the practical prompt is something li
 Set this up with VCL alerts to my Telegram chat. My Telegram is already connected to OpenClaw.
 ```
 
-If the Telegram account is not connected yet, handle that first in OpenClaw, then come back and finish the VCL loop setup. If the connected bot/account has never spoken in the destination chat before, the agent may still ask for the numeric chat id.
+If the Telegram account is not connected yet, handle that first in OpenClaw, then come back and finish the VCL loop setup. If the agent still cannot infer the destination, provide the numeric chat id.
 
 ### 7) Test notification delivery
 
