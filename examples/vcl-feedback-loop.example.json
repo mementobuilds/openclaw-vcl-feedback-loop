@@ -1,0 +1,12 @@
+{
+  "baseUrl": "https://YOUR-VCL-HOST",
+  "projectId": 26,
+  "apiKey": "YOUR_VCL_PROJECT_API_KEY",
+  "range": "30d",
+  "source": "all",
+  "notify": {
+    "channel": "telegram",
+    "target": "CHAT_OR_USER_ID",
+    "account": "default"
+  }
+}

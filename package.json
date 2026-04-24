@@ -1,0 +1,27 @@
+{
+  "name": "openclaw-vcl-feedback-loop",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Deterministic, approval-gated VCL feedback polling and notification for OpenClaw.",
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap-vcl-feedback-loop.js",
+    "poll": "node scripts/poll-vcl-feedback.js",
+    "message": "node scripts/poll-vcl-feedback.js --message",
+    "new-message": "node scripts/poll-vcl-feedback.js --new-message",
+    "notify": "node scripts/poll-vcl-feedback.js --notify-openclaw",
+    "ack": "node scripts/ack-vcl-feedback.js"
+  },
+  "keywords": [
+    "openclaw",
+    "vcl",
+    "vibe-coding-list",
+    "feedback",
+    "agent-insights",
+    "automation"
+  ]
+}
