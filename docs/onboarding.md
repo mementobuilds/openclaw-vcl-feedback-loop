@@ -56,8 +56,9 @@ Fallback: if needed, the user can also copy the **Read insights** curl template 
 5. Install the 5-minute cron.
 6. Inspect the target project repo and confirm the agent can edit it.
 7. Discover or set up a deploy path the agent can trigger from CLI.
-8. Explain `OK`, `HOLD`, and `ASK`.
-9. Confirm how post-deploy VCL replies and changelog updates will be posted.
+8. Make sure the deploy flow verifies the live public deployment before anything is marked shipped.
+9. Explain `OK`, `HOLD`, and `ASK`.
+10. Confirm how post-deploy VCL replies, changelog updates, and final acking will happen only after verification passes.
 
 ## Manual equivalents
 

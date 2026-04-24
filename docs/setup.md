@@ -71,7 +71,7 @@ The agent also needs:
 - permission to clone or edit it locally
 - a deploy path it can trigger from CLI after making fixes
 
-That deploy path can be Railway, Vercel, Netlify, GitHub Actions, a VPS, or a local deploy script. The important part is not the platform; it is that the agent can ship approved fixes programmatically after `OK`.
+That deploy path can be Railway, Vercel, Netlify, GitHub Actions, a VPS, or a local deploy script. The important part is not the platform; it is that the agent can ship approved fixes programmatically after `OK`, verify the live result, and only then mark the feedback as shipped.
 
 ## Safe cron example
 
@@ -86,6 +86,7 @@ That deploy path can be Railway, Vercel, Netlify, GitHub Actions, a VPS, or a lo
 - `ASK <id> <question>` → post a clarification question back into the VCL thread
 
 Only after explicit approval should downstream implementation/deploy automation run.
+Do not post the shipped reply, changelog update, or final ack until the live public deployment has been verified.
 
 ## Changelog linkage
 

@@ -63,7 +63,8 @@ https://github.com/me/my-project
 
 I want Telegram alerts.
 I want approved fixes to be implemented, committed, deployed,
-and then posted back to VCL as thread replies and changelog updates
+and only marked as shipped after the live public deployment is verified.
+Then post back to VCL as thread replies and changelog updates
 linked to the feedback ids that influenced them.
 
 If anything is missing, figure out what you can automatically
@@ -281,9 +282,9 @@ Recommended sequence:
 1. Poll and notify deterministically
 2. Wait for explicit human approval or question
 3. Map the response to a specific feedback id
-4. Ack the item on `OK` or `HOLD`
-5. Only after `OK` should downstream automation implement, test, deploy, and verify
-6. After deploy, optionally post a thread reply and a changelog update linked to the feedback ids that influenced the change
+4. Ack the item on `HOLD`
+5. Only after `OK` should downstream automation implement, test, deploy, and verify the public deployment
+6. Only after public deploy verification should the workflow post a thread reply, post a changelog update, and ack the feedback item
 
 ---
 
@@ -735,11 +736,12 @@ A strong practical pattern is:
 2. human replies `OK`, `HOLD`, or `ASK`
 3. `handle-vcl-response.js` parses the reply
 4. your project-specific automation implements the approved change
-5. your project-specific deploy verification runs
-6. `vcl-api.js reply ...` posts back into the original thread
-7. `vcl-api.js changelog ... --linked-feedback-ids ...` posts a release/update entry showing what feedback influenced the change
+5. your project-specific deploy verification runs against the live public URL
+6. only after verification passes, `vcl-api.js reply ...` posts back into the original thread
+7. only after verification passes, `vcl-api.js changelog ... --linked-feedback-ids ...` posts a release/update entry showing what feedback influenced the change
+8. only after verification passes, ack the feedback item so it stops re-alerting
 
-That pattern stays safe because the expensive or creative parts happen **after** a clear human decision.
+That pattern stays safe because the expensive or creative parts happen **after** a clear human decision, and nothing is marked shipped until the public deployment is actually verified.
 
 ### Recommended user experience
 
