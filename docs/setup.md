@@ -46,7 +46,7 @@ So for a Telegram-based setup, make sure:
 Prompt-first version:
 
 ```text
-Set this up and send VCL notifications to my Telegram chat.
+Set this up, send VCL notifications to my Telegram chat, connect the target project repo, and prepare the deploy flow so approved fixes can be shipped automatically.
 ```
 
 ## Target project repo + deploy access

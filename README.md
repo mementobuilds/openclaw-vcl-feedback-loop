@@ -53,10 +53,10 @@ If you do not have OpenClaw yet, start here:
 Example prompt:
 
 ```text
-Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up this VCL feedback loop for my project. My VCL project is https://vibecodinglist.com/projects/my-project, this is the API key: ..., the target project repo is https://github.com/me/my-project, and I want Telegram alerts.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the full VCL workflow for my project. My VCL project is https://vibecodinglist.com/projects/my-project, this is the API key: ..., the target project repo is https://github.com/me/my-project, I want Telegram alerts, and I want approved fixes to be implemented, committed, deployed, and then posted back to VCL as thread replies and changelog updates linked to the feedback ids that influenced them. If anything is missing, figure out what you can automatically and ask me only for the remaining required inputs.
 ```
 
-The agent should then be able to create the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
+The agent should then be able to create the local config, test the poller, add notify settings, install the cron job, inspect the target repo, and work with the user to complete the implementation/deploy side with minimal manual setup.
 
 If sharing the project URL is inconvenient, the user can send just the project id instead.
 If needed, the **Read insights** curl template from the Agent API tab can still be used as a fallback input.
@@ -447,15 +447,15 @@ Then the agent can do the setup work:
 ### Good example prompts
 
 ```text
-Set up the VCL feedback loop for my project using this Agent API curl snippet. Notify me on Telegram.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the full VCL workflow for my project. My VCL project is https://vibecodinglist.com/projects/my-project, this is the API key: ..., the target project repo is https://github.com/me/my-project, and I want Telegram alerts plus OK / HOLD / ASK handling.
 ```
 
 ```text
-I added my project to VibeCodingList. Help me connect the Agent API, send feedback alerts to Telegram, and support OK / HOLD / ASK replies.
+I added my project to VibeCodingList. Help me connect the Agent API, wire Telegram alerts, connect the target source repo, and set up the implementation/deploy flow so approved fixes can be shipped and posted back to VCL.
 ```
 
 ```text
-Use this repo to set up the same workflow as the Tap Flash example: polling, Telegram alerts, approval gating, thread replies, and changelog updates.
+Set this up end to end: polling, Telegram alerts, approval gating, thread replies, changelog updates, target repo access, and deployment after approved fixes. Figure out the missing pieces with me instead of making me do the setup manually.
 ```
 
 The manual CLI examples below still matter, but they should be treated as the **fallback path** or the documentation for what the agent is doing on your behalf.
@@ -713,16 +713,18 @@ The default setup in this repo assumes:
 - the Agent API key comes from the VCL project page
 - OpenClaw is already installed
 - Telegram is already connected to OpenClaw
+- the target project source repo exists and is reachable by the agent
+- there is some deploy path the agent can trigger after making approved fixes
 - the user mostly interacts by chat, not by shell
 - the user's own agent does the setup work and only asks for the missing inputs
 
 So the practical user experience should feel like:
 
 ```text
-User: Set up the VCL feedback loop for my project.
-Agent: Send me the Agent API curl snippet and tell me which Telegram chat to notify.
-User: [provides snippet / destination]
-Agent: I’ll wire the config, test polling, test Telegram delivery, and set up the 5-minute cron.
+User: Set up the full VCL workflow for my project.
+Agent: I’ll clone the workflow repo, inspect what you gave me, wire the VCL config, connect Telegram routing, inspect the target project repo, and figure out what is still missing for deploy automation. I’ll only ask you for the remaining required inputs.
+User: [provides project URL/id, API key, target repo, preferred deploy target]
+Agent: I’ll test polling, test Telegram delivery, set up the 5-minute cron, connect the target repo/deploy flow, and prepare the end-to-end OK / HOLD / ASK loop.
 ```
 
 That is the recommended UX for this repo.

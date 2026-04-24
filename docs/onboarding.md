@@ -11,7 +11,7 @@ The intended user experience is prompt-first.
 A good starting prompt is:
 
 ```text
-Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the VCL feedback loop for my project. Use Telegram notifications.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the full VCL workflow for my project. Use Telegram notifications, connect the target project repo, and set up the implementation/deploy side so approved fixes can be shipped and posted back to VCL. If anything is missing, figure out what you can automatically and ask me only for the remaining required inputs.
 ```
 
 The agent should then ask only for the missing inputs, usually:
@@ -19,7 +19,8 @@ The agent should then ask only for the missing inputs, usually:
 - the VCL project page URL or project id
 - the VCL API key
 - the Telegram destination chat/user id, if it cannot infer it
-- the target project repo URL, if the user wants end-to-end fixes and deploys
+- the target project repo URL
+- the preferred deploy target or deploy script details, if they are not already discoverable
 
 ## What the user needs to do in VCL first
 
@@ -43,7 +44,10 @@ Fallback: if needed, the user can also copy the **Read insights** curl template 
 3. Verify polling works.
 4. Test notification delivery.
 5. Install the 5-minute cron.
-6. Explain `OK`, `HOLD`, and `ASK`.
+6. Inspect the target project repo and confirm the agent can edit it.
+7. Discover or set up a deploy path the agent can trigger from CLI.
+8. Explain `OK`, `HOLD`, and `ASK`.
+9. Confirm how post-deploy VCL replies and changelog updates will be posted.
 
 ## Manual equivalents
 
