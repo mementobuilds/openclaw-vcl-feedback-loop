@@ -11,7 +11,16 @@ The intended user experience is prompt-first.
 A good starting prompt is:
 
 ```text
-Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the full VCL workflow for my project. Use Telegram notifications, connect the target project repo, and set up the implementation/deploy side so approved fixes can be shipped and posted back to VCL. If anything is missing, figure out what you can automatically and ask me only for the remaining required inputs.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop
+and set up the full VCL workflow for my project.
+
+Use Telegram notifications.
+Connect the target project repo.
+Set up the implementation/deploy side so approved fixes
+can be shipped and posted back to VCL.
+
+If anything is missing, figure out what you can automatically
+and ask me only for the remaining required inputs.
 ```
 
 The agent should then ask only for the missing inputs, usually:

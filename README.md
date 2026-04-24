@@ -53,7 +53,25 @@ If you do not have OpenClaw yet, start here:
 Example prompt:
 
 ```text
-Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the full VCL workflow for my project. My VCL project is https://vibecodinglist.com/projects/my-project, this is the API key: ..., the target project repo is https://github.com/me/my-project, I want Telegram alerts, and I want approved fixes to be implemented, committed, deployed, and then posted back to VCL as thread replies and changelog updates linked to the feedback ids that influenced them. If anything is missing, figure out what you can automatically and ask me only for the remaining required inputs.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop
+and set up the full VCL workflow for my project.
+
+My VCL project is:
+https://vibecodinglist.com/projects/my-project
+
+This is the API key:
+...
+
+The target project repo is:
+https://github.com/me/my-project
+
+I want Telegram alerts.
+I want approved fixes to be implemented, committed, deployed,
+and then posted back to VCL as thread replies and changelog updates
+linked to the feedback ids that influenced them.
+
+If anything is missing, figure out what you can automatically
+and ask me only for the remaining required inputs.
 ```
 
 The agent should then be able to create the local config, test the poller, add notify settings, install the cron job, inspect the target repo, and work with the user to complete the implementation/deploy side with minimal manual setup.
@@ -447,7 +465,19 @@ Then the agent can do the setup work:
 ### Good example prompts
 
 ```text
-Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the full VCL workflow for my project. My VCL project is https://vibecodinglist.com/projects/my-project, this is the API key: ..., the target project repo is https://github.com/me/my-project, and I want Telegram alerts plus OK / HOLD / ASK handling.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop
+and set up the full VCL workflow for my project.
+
+My VCL project is:
+https://vibecodinglist.com/projects/my-project
+
+This is the API key:
+...
+
+The target project repo is:
+https://github.com/me/my-project
+
+I want Telegram alerts plus OK / HOLD / ASK handling.
 ```
 
 ```text
