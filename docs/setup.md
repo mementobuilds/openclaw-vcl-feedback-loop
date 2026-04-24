@@ -15,10 +15,11 @@ After a project is live on VCL, open the project page and go to the **Agent API*
 That page gives you:
 
 - an API key you can scope for:
-  - read feedback
-  - reply to feedback
-  - post changelog updates
-- an example curl command you can feed into the bootstrap script
+  - `project_intelligence:read`
+  - `project_intelligence:write_feedback`
+  - `project_intelligence:write_updates`
+- the project id / project page URL you need for config
+- a **Read insights** curl template you can use as a fallback bootstrap input
 
 ## Telegram setup for the default flow
 

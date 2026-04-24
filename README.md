@@ -28,15 +28,25 @@ The polling path is deterministic and cheap. No LLM is required just to detect n
 1. Clone this repo somewhere OpenClaw can access it.
 2. Add your project to VCL.
 3. Open the project page → **Agent API**.
-4. Create an API key with the scopes you want.
-5. Copy the curl snippet from that tab.
-6. Tell OpenClaw something like:
+4. Create one API key with the scopes you want:
+   - `project_intelligence:read`
+   - `project_intelligence:write_feedback`
+   - `project_intelligence:write_updates`
+5. Send your OpenClaw agent:
+   - your VCL **project page URL** or **project id**
+   - the **API key**
+   - your Telegram destination, if you want Telegram alerts
+
+Example prompt:
 
 ```text
-Set up this VCL feedback loop for me. Use Telegram notifications. Here is the Agent API curl snippet: ...
+Set up this VCL feedback loop for my project. My VCL project is https://vibecodinglist.com/projects/my-project and this is the API key: ... Send alerts to my Telegram.
 ```
 
-The agent should then be able to bootstrap the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
+The agent should then be able to create the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
+
+If sharing the project URL is awkward, the user can send just the project id instead.
+If needed, the **Read insights** curl template from the Agent API tab can still be used as a fallback input.
 
 ### Manual fallback quick start
 
@@ -49,41 +59,48 @@ git clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop.git
 cd openclaw-vcl-feedback-loop
 ```
 
-#### 2) Copy the curl example from the VCL project page
+#### 2) Create a local config
 
-On the project page, open **Agent API** and copy the exact curl example into a local file:
+The simplest manual config is:
 
-```bash
-nano ~/vcl-curl.txt
+```json
+{
+  "baseUrl": "https://vibecodinglist.com",
+  "projectId": 438,
+  "apiKey": "YOUR_VCL_PROJECT_API_KEY"
+}
 ```
 
-It should look roughly like this:
-
-```bash
-curl --request GET \
-  --url "https://YOUR-VCL-HOST/api/project-intelligence/v1/projects/26/insights?range=30d&source=all" \
-  --header "x-project-api-key: YOUR_PROJECT_API_KEY" \
-  --header "Accept: application/json"
-```
-
-#### 3) Bootstrap the config
-
-```bash
-node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt
-```
-
-This writes a local config file to:
+Save it at:
 
 ```text
 ~/.openclaw/workspace/.openclaw/vcl-feedback-loop.json
 ```
 
-It extracts:
+If you want Telegram alerts too, add:
 
-- the insights or feed URL
-- the project API key
+```json
+{
+  "baseUrl": "https://vibecodinglist.com",
+  "projectId": 438,
+  "apiKey": "YOUR_VCL_PROJECT_API_KEY",
+  "notify": {
+    "channel": "telegram",
+    "target": "CHAT_ID",
+    "account": "default"
+  }
+}
+```
 
-It prints only a **redacted** API key summary, not the full key.
+#### 3) Optional: bootstrap from the Read insights curl template
+
+If you prefer, you can still bootstrap from the **Read insights** curl template from the Agent API tab:
+
+```bash
+node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt
+```
+
+That extracts the read URL and project API key automatically and writes the config for you.
 
 #### 4) Verify connectivity
 
@@ -102,17 +119,7 @@ Expected behavior:
 
 #### 5) Wire notifications to OpenClaw
 
-If you already know the destination, include it during bootstrap:
-
-```bash
-node scripts/bootstrap-vcl-feedback-loop.js \
-  --curl-file ~/vcl-curl.txt \
-  --channel telegram \
-  --target CHAT_ID \
-  --account default
-```
-
-Or add it later to the config file.
+If you already know the destination, put it directly in the config file under `notify`, or include it during bootstrap if you are using the curl-based fallback.
 
 ### 6) Connect Telegram the same way as this example setup
 
@@ -192,7 +199,7 @@ node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this issue
 - OpenClaw installed and working
 - a VCL project with Agent API access
 - a VCL project API key
-- the VCL example curl command from the project page
+- your VCL project page URL or project id
 
 Optional but recommended:
 
@@ -212,7 +219,7 @@ There you can create a project API key scoped for actions like:
 - **reply to feedback**
 - **post updates in the changelog**
 
-VCL also shows an example curl command there. That curl example is the easiest way to bootstrap this repo.
+The easiest setup is to give your agent the project page URL or project id plus the API key. The **Read insights** curl template on that page is still useful as a fallback bootstrap input.
 
 > Keep project API keys out of git-tracked files.
 
