@@ -187,16 +187,81 @@ Optional but recommended:
 
 ---
 
+## Recommended setup style: prompt-first, not terminal-first
+
+The ideal experience is the same one Joe used here:
+**talk to OpenClaw and let the agent set it up for you.**
+
+In practice, that means the human mostly provides:
+
+- the VCL project page or curl snippet from the **Agent API** tab
+- where notifications should go
+- whether they want Telegram alerts
+- whether they want `OK / HOLD / ASK` handling and post-deploy replies/changelog updates
+
+Then the agent can do the setup work:
+
+- create the local config
+- wire the VCL URL and API key into the config
+- add Telegram notify settings
+- test polling
+- test notifications
+- add the cron job
+- explain how to reply with `OK`, `HOLD`, or `ASK`
+
+### Good example prompts
+
+```text
+Set up the VCL feedback loop for my project using this Agent API curl snippet. Notify me on Telegram and make it work like Tap Flash.
+```
+
+```text
+I added my project to Vibe Coding List. Help me connect the Agent API, send feedback alerts to Telegram, and support OK / HOLD / ASK replies.
+```
+
+```text
+Use this repo to set up the same workflow you built for Tap Flash: polling, Telegram alerts, approval gating, thread replies, and changelog updates.
+```
+
+The manual CLI examples below still matter, but they should be treated as the **fallback path** or the documentation for what the agent is doing on your behalf.
+
+---
+
 ## Quick start
 
-### 1) Clone this repo
+### Prompt-first quick start
+
+1. Clone this repo somewhere OpenClaw can access it.
+2. Add your project to VCL.
+3. Open the project page → **Agent API**.
+4. Create an API key with the scopes you want.
+5. Copy the curl snippet from that tab.
+6. Tell OpenClaw something like:
+
+```text
+Set up this VCL feedback loop for me. Use Telegram notifications. Here is the Agent API curl snippet: ...
+```
+
+If you want the Tap Flash-style experience, also say:
+
+```text
+Make it like the Tap Flash setup: Telegram alerts, OK / HOLD / ASK handling, and the ability to reply in VCL threads and post changelog updates tied to feedback ids.
+```
+
+The agent should then be able to bootstrap the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
+
+### Manual fallback quick start
+
+If you want to do the same setup by hand, this is the equivalent flow.
+
+#### 1) Clone this repo
 
 ```bash
 git clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop.git
 cd openclaw-vcl-feedback-loop
 ```
 
-### 2) Copy the curl example from the VCL project page
+#### 2) Copy the curl example from the VCL project page
 
 On the project page, open **Agent API** and copy the exact curl example into a local file:
 
@@ -213,7 +278,7 @@ curl --request GET \
   --header "Accept: application/json"
 ```
 
-### 3) Bootstrap the config
+#### 3) Bootstrap the config
 
 ```bash
 node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt
@@ -232,7 +297,7 @@ It extracts:
 
 It prints only a **redacted** API key summary, not the full key.
 
-### 4) Verify connectivity
+#### 4) Verify connectivity
 
 ```bash
 node scripts/poll-vcl-feedback.js
@@ -247,7 +312,7 @@ Expected behavior:
 - `--new-message` prints only pending items that have not yet been notified
 - if there is nothing pending, message modes print `NO_NEW_FEEDBACK`
 
-### 5) Wire notifications to OpenClaw
+#### 5) Wire notifications to OpenClaw
 
 If you already know the destination, include it during bootstrap:
 
@@ -261,7 +326,53 @@ node scripts/bootstrap-vcl-feedback-loop.js \
 
 Or add it later to the config file.
 
-### 6) Test notification delivery
+### 6) Connect Telegram the same way as this example setup
+
+The Tap Flash-style setup sends notifications through **OpenClaw's Telegram routing**, not by talking to Telegram directly from the script.
+
+That means the important pieces are:
+
+1. OpenClaw already has a Telegram account connected
+2. you know the Telegram target chat or user id
+3. the VCL loop config includes:
+   - `channel: telegram`
+   - `target: <CHAT_ID>`
+   - usually `account: default`
+
+You can bake that in during bootstrap:
+
+```bash
+node scripts/bootstrap-vcl-feedback-loop.js \
+  --curl-file ~/vcl-curl.txt \
+  --channel telegram \
+  --target CHAT_ID \
+  --account default
+```
+
+Or edit the config later:
+
+```json
+{
+  "baseUrl": "https://YOUR-VCL-HOST",
+  "projectId": 26,
+  "apiKey": "YOUR_VCL_PROJECT_API_KEY",
+  "notify": {
+    "channel": "telegram",
+    "target": "CHAT_ID",
+    "account": "default"
+  }
+}
+```
+
+If the user wants the setup mostly by chat, the practical prompt is something like:
+
+```text
+Set this up like Tap Flash and send VCL alerts to my Telegram chat. My Telegram is already connected to OpenClaw.
+```
+
+If the Telegram account is not connected yet, handle that first in OpenClaw, then come back and finish the VCL loop setup.
+
+### 7) Test notification delivery
 
 ```bash
 node scripts/poll-vcl-feedback.js --notify-openclaw
@@ -269,7 +380,7 @@ node scripts/poll-vcl-feedback.js --notify-openclaw
 
 This sends only **pending items that have not yet been marked as notified**.
 
-### 7) Handle a response
+### 8) Handle a response
 
 Ack a handled item directly:
 
@@ -551,6 +662,29 @@ A strong practical pattern is:
 7. `vcl-api.js changelog ... --linked-feedback-ids ...` posts a release/update entry showing what feedback influenced the change
 
 That pattern stays safe because the expensive or creative parts happen **after** a clear human decision.
+
+### If you want the same setup Joe has
+
+The closest description is:
+
+- VCL project already exists
+- Agent API key comes from the VCL project page
+- OpenClaw is already installed
+- Telegram is already connected to OpenClaw
+- the user mostly interacts by chat, not by shell
+- the agent does the setup work and only asks for the missing inputs
+
+So the practical user experience should feel like:
+
+```text
+User: Set up the same VCL feedback loop Joe uses for Tap Flash.
+Agent: Send me the Agent API curl snippet and tell me which Telegram chat to notify.
+User: [provides snippet / destination]
+Agent: I’ll wire the config, test polling, test Telegram delivery, and set up the 5-minute cron.
+```
+
+That is the recommended UX for this repo.
+The manual commands in this README exist so the setup remains inspectable and reproducible, but the preferred path is still **prompt the agent and let it do the work**.
 
 ---
 

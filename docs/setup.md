@@ -20,6 +20,33 @@ That page gives you:
   - post changelog updates
 - an example curl command you can feed into the bootstrap script
 
+## Telegram setup for the Tap Flash-style flow
+
+The scripts do **not** talk to Telegram directly.
+They send through **OpenClaw** using `openclaw message send`.
+
+So for a Telegram-based setup, make sure:
+
+1. Telegram is already connected to OpenClaw
+2. you know the target chat or user id
+3. the loop config includes:
+
+```json
+{
+  "notify": {
+    "channel": "telegram",
+    "target": "CHAT_ID",
+    "account": "default"
+  }
+}
+```
+
+Prompt-first version:
+
+```text
+Set this up like Tap Flash and send VCL notifications to my Telegram chat.
+```
+
 ## Safe cron example
 
 ```cron
