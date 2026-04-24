@@ -92,6 +92,8 @@ cd openclaw-vcl-feedback-loop
 
 #### 2) Create a local config
 
+If you need the numeric `projectId` for manual config, you can get it from the **Read insights** curl template in the Agent API tab. It appears in the `/projects/<id>/...` part of the URL.
+
 The simplest manual config is:
 
 ```json

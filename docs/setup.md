@@ -21,6 +21,8 @@ That page gives you:
 - the project id / project page URL you need for config
 - a **Read insights** curl template you can use as a fallback bootstrap input
 
+If you need the numeric `projectId`, you can read it from the `/projects/<id>/...` part of the Read insights URL.
+
 ## Telegram setup for the default flow
 
 The scripts do **not** talk to Telegram directly.
