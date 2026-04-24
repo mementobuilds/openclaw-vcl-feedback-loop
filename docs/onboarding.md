@@ -1,5 +1,9 @@
 # Quick onboarding
 
+If you do not have OpenClaw yet, start here:
+- GitHub: <https://github.com/openclaw/openclaw>
+- Docs: <https://docs.openclaw.ai>
+
 ## Recommended path: talk to OpenClaw
 
 The intended user experience is prompt-first.

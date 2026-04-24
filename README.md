@@ -23,6 +23,10 @@ The polling path is deterministic and cheap. No LLM is required just to detect n
 
 ## Quick start
 
+If you do not have OpenClaw yet, start here:
+- GitHub: <https://github.com/openclaw/openclaw>
+- Docs: <https://docs.openclaw.ai>
+
 ### Prompt-first quick start
 
 1. Clone this repo somewhere OpenClaw can access it.
