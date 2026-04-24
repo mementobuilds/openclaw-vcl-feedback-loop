@@ -36,12 +36,6 @@ The polling path is deterministic and cheap. No LLM is required just to detect n
 Set up this VCL feedback loop for me. Use Telegram notifications. Here is the Agent API curl snippet: ...
 ```
 
-If you want the Tap Flash-style experience, also say:
-
-```text
-Use the default setup with Telegram alerts, OK / HOLD / ASK handling, VCL thread replies, and changelog updates linked to feedback ids.
-```
-
 The agent should then be able to bootstrap the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
 
 ### Manual fallback quick start
