@@ -17,213 +17,7 @@ This repo now covers both sides of the loop:
 It is intentionally **not** a fully autonomous coding bot.
 The polling path is deterministic and cheap. No LLM is required just to detect new feedback.
 
----
-
-## What problem this solves
-
-If you wire VCL feedback straight into an LLM loop, things get messy fast:
-
-- repeated alerts
-- duplicate handling
-- fuzzy state
-- accidental auto-action without approval
-- hard-to-debug polling behavior
-
-This repo keeps the critical control plane simple and auditable:
-
-**fetch → normalize → fingerprint → compare → notify → wait → ack / ask / reply / update**
-
-That makes it much easier to trust.
-
----
-
-## What this repo does
-
-### Read-side / control-plane scripts
-
-- `scripts/bootstrap-vcl-feedback-loop.js`
-  - extracts the VCL URL + project API key from the curl example shown in the VCL UI
-  - writes a minimal local config file
-- `scripts/poll-vcl-feedback.js`
-  - fetches feedback
-  - tracks pending vs acked vs notified items
-  - prints surfaced findings or sends them through OpenClaw
-- `scripts/ack-vcl-feedback.js`
-  - marks one or more feedback items as handled so reminders stop
-
-### Write-side helper scripts
-
-- `scripts/vcl-api.js`
-  - replies to a feedback thread
-  - asks a fresh clarification question
-  - posts a changelog/update entry
-  - can attach `linkedFeedbackIds` so the update shows which feedback influenced the shipped change
-- `scripts/handle-vcl-response.js`
-  - parses natural human responses like:
-    - `OK 24`
-    - `HOLD 24`
-    - `ASK 24 Could you clarify whether this is mobile-only?`
-    - or, when only one item is pending, even just a plain question
-
-### Docs and examples
-
-- copy-paste setup docs
-- example config files
-- safe cron example
-- a real public example project: **Tap Flash**
-  - <https://vibecodinglist.com/projects/tap-flash-self-improving-game>
-
----
-
-## What this repo does **not** do
-
-This repo does **not**:
-
-- store secrets in git-tracked files
-- auto-approve feedback
-- auto-implement code changes without explicit human approval
-- guess your deploy flow
-- embed an LLM inside the polling loop
-
-That last point is deliberate.
-
-Use this repo for the **deterministic feedback/control layer**.
-Then attach your own project-specific automation after approval.
-
----
-
-## Current workflow model
-
-```text
-VCL project page
-  └─ Agent API tab
-       ├─ create scoped API key
-       ├─ read feedback / replies
-       ├─ reply to feedback threads
-       └─ post changelog updates
-
-         V
-bootstrap-vcl-feedback-loop.js
-  └─ saves local config
-
-         V
-poll-vcl-feedback.js
-  ├─ fetches current VCL feed
-  ├─ normalizes findings
-  ├─ fingerprints the feed
-  ├─ compares with local state
-  ├─ identifies pending + unnotified items
-  └─ sends a notification via OpenClaw
-
-         V
-Human replies
-  ├─ OK <id>
-  ├─ HOLD <id>
-  └─ ASK <id> <question>
-
-         V
-handle-vcl-response.js / vcl-api.js
-  ├─ ack handled items
-  ├─ post clarifying questions
-  ├─ post thread replies
-  └─ post changelog updates linked to feedback ids
-
-         V
-(optional) project-specific implementation / test / deploy flow
-```
-
----
-
-## Getting Agent API access in VCL
-
-Once a project has been added to **VibeCodingList**, go to that project's page and open the **Agent API** tab.
-
-There you can create a project API key scoped for actions like:
-
-- **read feedback**
-- **reply to feedback**
-- **post updates in the changelog**
-
-VCL also shows an example curl command there. That curl example is the easiest way to bootstrap this repo.
-
-> Keep project API keys out of git-tracked files.
-
----
-
-## Real example: Tap Flash
-
-A public example project using this style of workflow:
-
-**Tap Flash — self-improving game**
-<https://vibecodinglist.com/projects/tap-flash-self-improving-game>
-
-The live Tap Flash workflow that inspired this repo currently supports:
-
-- polling the VCL feed
-- notifying a human when new feedback arrives
-- `OK` / `HOLD` approval gating
-- `ASK` clarification questions back into the thread
-- replying after a requested change ships
-- posting changelog updates after deploy
-- linking changelog entries to the feedback that influenced the update
-
-That broader end-to-end flow is why this repo now documents both the read side and the write side clearly.
-
----
-
-## Requirements
-
-- Node.js 18+ (Node 20+ recommended)
-- OpenClaw installed and working
-- a VCL project with Agent API access
-- a VCL project API key
-- the VCL example curl command from the project page
-
-Optional but recommended:
-
-- Telegram or another OpenClaw-routed destination for notifications
-- cron on the machine
-- a project-specific implementation/deploy script if you want full automation after approval
-
----
-
-## Recommended setup style: prompt-first, not terminal-first
-
-The ideal experience is the same one Joe used here:
-**talk to OpenClaw and let the agent set it up for you.**
-
-In practice, that means the human mostly provides:
-
-- the VCL project page or curl snippet from the **Agent API** tab
-- where notifications should go
-- whether they want Telegram alerts
-- whether they want `OK / HOLD / ASK` handling and post-deploy replies/changelog updates
-
-Then the agent can do the setup work:
-
-- create the local config
-- wire the VCL URL and API key into the config
-- add Telegram notify settings
-- test polling
-- test notifications
-- add the cron job
-- explain how to reply with `OK`, `HOLD`, or `ASK`
-
-### Good example prompts
-
-```text
-Set up the VCL feedback loop for my project using this Agent API curl snippet. Notify me on Telegram.
-```
-
-```text
-I added my project to VibeCodingList. Help me connect the Agent API, send feedback alerts to Telegram, and support OK / HOLD / ASK replies.
-```
-
-```text
-Use this repo to set up the same workflow you built for Tap Flash: polling, Telegram alerts, approval gating, thread replies, and changelog updates.
-```
-
-The manual CLI examples below still matter, but they should be treated as the **fallback path** or the documentation for what the agent is doing on your behalf.
+**Best way to use this repo:** ask your own OpenClaw agent to set it up for you, then use the manual commands below only if you want to inspect or reproduce the setup by hand.
 
 ---
 
@@ -398,6 +192,38 @@ node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this issue
 
 ---
 
+## Requirements
+
+- Node.js 18+ (Node 20+ recommended)
+- OpenClaw installed and working
+- a VCL project with Agent API access
+- a VCL project API key
+- the VCL example curl command from the project page
+
+Optional but recommended:
+
+- Telegram or another OpenClaw-routed destination for notifications
+- cron on the machine
+- a project-specific implementation/deploy script if you want full automation after approval
+
+---
+
+## Getting Agent API access in VCL
+
+Once a project has been added to **VibeCodingList**, go to that project's page and open the **Agent API** tab.
+
+There you can create a project API key scoped for actions like:
+
+- **read feedback**
+- **reply to feedback**
+- **post updates in the changelog**
+
+VCL also shows an example curl command there. That curl example is the easiest way to bootstrap this repo.
+
+> Keep project API keys out of git-tracked files.
+
+---
+
 ## Approval + reply model
 
 The simplest safe convention is:
@@ -417,6 +243,182 @@ Recommended sequence:
 4. Ack the item on `OK` or `HOLD`
 5. Only after `OK` should downstream automation implement, test, deploy, and verify
 6. After deploy, optionally post a thread reply and a changelog update linked to the feedback ids that influenced the change
+
+---
+
+## Real example: Tap Flash
+
+A public example project using this style of workflow:
+
+**Tap Flash — self-improving game**
+<https://vibecodinglist.com/projects/tap-flash-self-improving-game>
+
+The live Tap Flash workflow that inspired this repo currently supports:
+
+- polling the VCL feed
+- notifying a human when new feedback arrives
+- `OK` / `HOLD` approval gating
+- `ASK` clarification questions back into the thread
+- replying after a requested change ships
+- posting changelog updates after deploy
+- linking changelog entries to the feedback that influenced the update
+
+That broader end-to-end flow is why this repo now documents both the read side and the write side clearly.
+
+---
+
+## What problem this solves
+
+If you wire VCL feedback straight into an LLM loop, things get messy fast:
+
+- repeated alerts
+- duplicate handling
+- fuzzy state
+- accidental auto-action without approval
+- hard-to-debug polling behavior
+
+This repo keeps the critical control plane simple and auditable:
+
+**fetch → normalize → fingerprint → compare → notify → wait → ack / ask / reply / update**
+
+That makes it much easier to trust.
+
+---
+
+## What this repo does
+
+### Read-side / control-plane scripts
+
+- `scripts/bootstrap-vcl-feedback-loop.js`
+  - extracts the VCL URL + project API key from the curl example shown in the VCL UI
+  - writes a minimal local config file
+- `scripts/poll-vcl-feedback.js`
+  - fetches feedback
+  - tracks pending vs acked vs notified items
+  - prints surfaced findings or sends them through OpenClaw
+- `scripts/ack-vcl-feedback.js`
+  - marks one or more feedback items as handled so reminders stop
+
+### Write-side helper scripts
+
+- `scripts/vcl-api.js`
+  - replies to a feedback thread
+  - asks a fresh clarification question
+  - posts a changelog/update entry
+  - can attach `linkedFeedbackIds` so the update shows which feedback influenced the shipped change
+- `scripts/handle-vcl-response.js`
+  - parses natural human responses like:
+    - `OK 24`
+    - `HOLD 24`
+    - `ASK 24 Could you clarify whether this is mobile-only?`
+    - or, when only one item is pending, even just a plain question
+
+### Docs and examples
+
+- copy-paste setup docs
+- example config files
+- safe cron example
+- a real public example project: **Tap Flash**
+  - <https://vibecodinglist.com/projects/tap-flash-self-improving-game>
+
+---
+
+## What this repo does **not** do
+
+This repo does **not**:
+
+- store secrets in git-tracked files
+- auto-approve feedback
+- auto-implement code changes without explicit human approval
+- guess your deploy flow
+- embed an LLM inside the polling loop
+
+That last point is deliberate.
+
+Use this repo for the **deterministic feedback/control layer**.
+Then attach your own project-specific automation after approval.
+
+---
+
+## Current workflow model
+
+```text
+VCL project page
+  └─ Agent API tab
+       ├─ create scoped API key
+       ├─ read feedback / replies
+       ├─ reply to feedback threads
+       └─ post changelog updates
+
+         V
+bootstrap-vcl-feedback-loop.js
+  └─ saves local config
+
+         V
+poll-vcl-feedback.js
+  ├─ fetches current VCL feed
+  ├─ normalizes findings
+  ├─ fingerprints the feed
+  ├─ compares with local state
+  ├─ identifies pending + unnotified items
+  └─ sends a notification via OpenClaw
+
+         V
+Human replies
+  ├─ OK <id>
+  ├─ HOLD <id>
+  └─ ASK <id> <question>
+
+         V
+handle-vcl-response.js / vcl-api.js
+  ├─ ack handled items
+  ├─ post clarifying questions
+  ├─ post thread replies
+  └─ post changelog updates linked to feedback ids
+
+         V
+(optional) project-specific implementation / test / deploy flow
+```
+
+---
+
+## Recommended setup style: prompt-first, not terminal-first
+
+The ideal experience is the same one Joe used here:
+**talk to OpenClaw and let the agent set it up for you.**
+
+In practice, that means the human mostly provides:
+
+- the VCL project page or curl snippet from the **Agent API** tab
+- where notifications should go
+- whether they want Telegram alerts
+- whether they want `OK / HOLD / ASK` handling and post-deploy replies/changelog updates
+
+Then the agent can do the setup work:
+
+- create the local config
+- wire the VCL URL and API key into the config
+- add Telegram notify settings
+- test polling
+- test notifications
+- add the cron job
+- explain how to reply with `OK`, `HOLD`, or `ASK`
+
+### Good example prompts
+
+```text
+Set up the VCL feedback loop for my project using this Agent API curl snippet. Notify me on Telegram.
+```
+
+```text
+I added my project to VibeCodingList. Help me connect the Agent API, send feedback alerts to Telegram, and support OK / HOLD / ASK replies.
+```
+
+```text
+Use this repo to set up the same workflow you built for Tap Flash: polling, Telegram alerts, approval gating, thread replies, and changelog updates.
+```
+
+The manual CLI examples below still matter, but they should be treated as the **fallback path** or the documentation for what the agent is doing on your behalf.
 
 ---
 
