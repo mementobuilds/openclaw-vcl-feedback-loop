@@ -29,22 +29,22 @@ If you do not have OpenClaw yet, start here:
 
 ### Prompt-first quick start
 
-1. Clone this repo somewhere OpenClaw can access it.
-2. Add your project to VCL.
-3. Open the project page → **Agent API**.
-4. Create one API key with the scopes you want:
+1. If your project is not on VCL yet, submit it here:
+   <https://vibecodinglist.com/submit>
+2. Open the project page → **Agent API**.
+3. Create one API key with the scopes you want:
    - `project_intelligence:read`
    - `project_intelligence:write_feedback`
    - `project_intelligence:write_updates`
-5. If you want Telegram alerts:
+4. If you want Telegram alerts:
    - connect Telegram to OpenClaw first
    - start at least one chat with the connected bot/account
    - if alerts should go to a group, add the bot there and make sure there is at least one message in that chat
-6. Make sure the target project itself is reachable by the agent:
+5. Make sure the target project itself is reachable by the agent:
    - the source repo exists (GitHub or another accessible git remote)
    - OpenClaw can clone or access that repo
    - there is a deploy path the agent can trigger from CLI after making fixes
-7. Send your OpenClaw agent:
+6. Send your OpenClaw agent:
    - your VCL **project page URL** or **project id**
    - the **API key**
    - your Telegram destination, if you want Telegram alerts

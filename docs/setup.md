@@ -10,7 +10,10 @@ State:
 
 ## Agent API access
 
-After a project is live on VCL, open the project page and go to the **Agent API** tab.
+If the project is not on VCL yet, submit it here first:
+<https://vibecodinglist.com/submit>
+
+After the project is live on VCL, open the project page and go to the **Agent API** tab.
 
 That page gives you:
 

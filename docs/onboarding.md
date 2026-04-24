@@ -33,7 +33,8 @@ The agent should then ask only for the missing inputs, usually:
 
 ## What the user needs to do in VCL first
 
-1. Add the project to VCL.
+1. If the project is not on VCL yet, submit it here:
+   <https://vibecodinglist.com/submit>
 2. Open the project's **Agent API** tab.
 3. Create one API key with the permissions you need:
    - `project_intelligence:read`
