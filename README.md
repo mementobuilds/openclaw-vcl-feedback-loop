@@ -36,15 +36,24 @@ If you do not have OpenClaw yet, start here:
    - `project_intelligence:read`
    - `project_intelligence:write_feedback`
    - `project_intelligence:write_updates`
-5. Send your OpenClaw agent:
+5. If you want Telegram alerts:
+   - connect Telegram to OpenClaw first
+   - start at least one chat with the connected bot/account
+   - if alerts should go to a group, add the bot there and make sure there is at least one message in that chat
+6. Make sure the target project itself is reachable by the agent:
+   - the source repo exists (GitHub or another accessible git remote)
+   - OpenClaw can clone or access that repo
+   - there is a deploy path the agent can trigger from CLI after making fixes
+7. Send your OpenClaw agent:
    - your VCL **project page URL** or **project id**
    - the **API key**
    - your Telegram destination, if you want Telegram alerts
+   - the target project repo URL, if you want end-to-end implementation and deploys
 
 Example prompt:
 
 ```text
-Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up this VCL feedback loop for my project. My VCL project is https://vibecodinglist.com/projects/my-project and this is the API key: ... Send alerts to my Telegram.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up this VCL feedback loop for my project. My VCL project is https://vibecodinglist.com/projects/my-project, this is the API key: ..., the target project repo is https://github.com/me/my-project, and I want Telegram alerts.
 ```
 
 The agent should then be able to create the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
@@ -132,8 +141,9 @@ This setup sends notifications through **OpenClaw's Telegram routing**, not by t
 That means the important pieces are:
 
 1. OpenClaw already has a Telegram account connected
-2. you know the Telegram target chat or user id
-3. the VCL loop config includes:
+2. the connected bot/account has already spoken in the destination chat at least once
+3. you know the Telegram target chat or user id if the agent cannot infer it automatically
+4. the VCL loop config includes:
    - `channel: telegram`
    - `target: <CHAT_ID>`
    - usually `account: default`
@@ -169,7 +179,7 @@ If the user wants the setup mostly by chat, the practical prompt is something li
 Set this up with VCL alerts to my Telegram chat. My Telegram is already connected to OpenClaw.
 ```
 
-If the Telegram account is not connected yet, handle that first in OpenClaw, then come back and finish the VCL loop setup.
+If the Telegram account is not connected yet, handle that first in OpenClaw, then come back and finish the VCL loop setup. If the connected bot/account has never spoken in the destination chat before, the agent may still ask for the numeric chat id.
 
 ### 7) Test notification delivery
 
@@ -208,6 +218,8 @@ node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this issue
 Optional but recommended:
 
 - Telegram or another OpenClaw-routed destination for notifications
+- access to the target project source repo
+- a deploy method the agent can trigger from CLI after making fixes
 - cron on the machine
 - a project-specific implementation/deploy script if you want full automation after approval
 
@@ -250,6 +262,29 @@ Recommended sequence:
 6. After deploy, optionally post a thread reply and a changelog update linked to the feedback ids that influenced the change
 
 ---
+
+## What else you need for end-to-end automation
+
+This repo handles the **feedback/control loop**.
+To actually ship approved fixes, the target project still needs an execution environment the agent can use.
+
+In practice, that usually means:
+
+- the target project's source repo exists and is accessible to OpenClaw
+- the agent can edit that repo locally or clone it from a remote such as GitHub
+- there is a deploy path the agent can trigger from CLI after making fixes
+- there is some way to verify the deploy before posting the VCL reply/changelog follow-up
+
+That deploy path can be many things:
+
+- Railway
+- Vercel
+- Netlify
+- GitHub Actions
+- a VPS or self-hosted box
+- a local deploy script
+
+GitHub and Railway are common examples, but they are not required. The important part is that the agent has a repo it can change and a CLI-capable path to deploy the result.
 
 ## Real example: Tap Flash
 

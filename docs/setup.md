@@ -29,8 +29,9 @@ They send through **OpenClaw** using `openclaw message send`.
 So for a Telegram-based setup, make sure:
 
 1. Telegram is already connected to OpenClaw
-2. you know the target chat or user id
-3. the loop config includes:
+2. the connected bot/account has already spoken in the destination chat at least once
+3. you know the target chat or user id if the agent cannot infer it
+4. the loop config includes:
 
 ```json
 {
@@ -47,6 +48,17 @@ Prompt-first version:
 ```text
 Set this up and send VCL notifications to my Telegram chat.
 ```
+
+## Target project repo + deploy access
+
+For end-to-end automation, the VCL loop is only half the setup.
+The agent also needs:
+
+- access to the target project's source repo
+- permission to clone or edit it locally
+- a deploy path it can trigger from CLI after making fixes
+
+That deploy path can be Railway, Vercel, Netlify, GitHub Actions, a VPS, or a local deploy script. The important part is not the platform; it is that the agent can ship approved fixes programmatically after `OK`.
 
 ## Safe cron example
 
