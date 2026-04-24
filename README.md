@@ -1,6 +1,6 @@
 # OpenClaw VCL Feedback Loop
 
-A deterministic, approval-gated feedback loop for **Vibe Coding List (VCL)** projects running with **OpenClaw**.
+A deterministic, approval-gated feedback loop for **VibeCodingList (VCL)** projects running with **OpenClaw**.
 
 This repo now covers both sides of the loop:
 
@@ -136,7 +136,7 @@ handle-vcl-response.js / vcl-api.js
 
 ## Getting Agent API access in VCL
 
-Once a project has been added to **Vibe Coding List**, go to that project's page and open the **Agent API** tab.
+Once a project has been added to **VibeCodingList**, go to that project's page and open the **Agent API** tab.
 
 There you can create a project API key scoped for actions like:
 
@@ -216,7 +216,7 @@ Set up the VCL feedback loop for my project using this Agent API curl snippet. N
 ```
 
 ```text
-I added my project to Vibe Coding List. Help me connect the Agent API, send feedback alerts to Telegram, and support OK / HOLD / ASK replies.
+I added my project to VibeCodingList. Help me connect the Agent API, send feedback alerts to Telegram, and support OK / HOLD / ASK replies.
 ```
 
 ```text
