@@ -11,7 +11,7 @@ The intended user experience is prompt-first.
 A good starting prompt is:
 
 ```text
-Set up the VCL feedback loop for my project. Use Telegram notifications.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up the VCL feedback loop for my project. Use Telegram notifications.
 ```
 
 The agent should then ask only for the missing inputs, usually:

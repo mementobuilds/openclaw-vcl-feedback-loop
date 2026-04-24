@@ -44,7 +44,7 @@ If you do not have OpenClaw yet, start here:
 Example prompt:
 
 ```text
-Set up this VCL feedback loop for my project. My VCL project is https://vibecodinglist.com/projects/my-project and this is the API key: ... Send alerts to my Telegram.
+Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up this VCL feedback loop for my project. My VCL project is https://vibecodinglist.com/projects/my-project and this is the API key: ... Send alerts to my Telegram.
 ```
 
 The agent should then be able to create the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
