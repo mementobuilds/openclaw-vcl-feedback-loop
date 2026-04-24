@@ -23,6 +23,14 @@ That page gives you:
 
 If you need the numeric `projectId`, you can read it from the `/projects/<id>/...` part of the Read insights URL.
 
+If you only have the public project slug, you can also resolve it with:
+
+```bash
+curl https://vibecodinglist.com/api/projects/by-slug/<slug>
+```
+
+The returned JSON includes the top-level `id`.
+
 ## Telegram setup for the default flow
 
 The scripts do **not** talk to Telegram directly.

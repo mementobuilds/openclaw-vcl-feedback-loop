@@ -94,6 +94,14 @@ cd openclaw-vcl-feedback-loop
 
 If you need the numeric `projectId` for manual config, you can get it from the **Read insights** curl template in the Agent API tab. It appears in the `/projects/<id>/...` part of the URL.
 
+If you only have the public project slug, you can also resolve it via:
+
+```bash
+curl https://vibecodinglist.com/api/projects/by-slug/<slug>
+```
+
+The returned JSON includes the top-level `id`.
+
 The simplest manual config is:
 
 ```json
