@@ -663,21 +663,21 @@ A strong practical pattern is:
 
 That pattern stays safe because the expensive or creative parts happen **after** a clear human decision.
 
-### If you want the same setup Joe has
+### If you want the same style of setup as the Tap Flash example
 
 The closest description is:
 
-- VCL project already exists
-- Agent API key comes from the VCL project page
+- the VCL project already exists
+- the Agent API key comes from the VCL project page
 - OpenClaw is already installed
 - Telegram is already connected to OpenClaw
 - the user mostly interacts by chat, not by shell
-- the agent does the setup work and only asks for the missing inputs
+- the user's own agent does the setup work and only asks for the missing inputs
 
 So the practical user experience should feel like:
 
 ```text
-User: Set up the same VCL feedback loop Joe uses for Tap Flash.
+User: Set up the same VCL feedback loop style as the Tap Flash example.
 Agent: Send me the Agent API curl snippet and tell me which Telegram chat to notify.
 User: [provides snippet / destination]
 Agent: I’ll wire the config, test polling, test Telegram delivery, and set up the 5-minute cron.
