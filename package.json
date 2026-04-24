@@ -14,7 +14,11 @@
     "message": "node scripts/poll-vcl-feedback.js --message",
     "new-message": "node scripts/poll-vcl-feedback.js --new-message",
     "notify": "node scripts/poll-vcl-feedback.js --notify-openclaw",
-    "ack": "node scripts/ack-vcl-feedback.js"
+    "ack": "node scripts/ack-vcl-feedback.js",
+    "handle-response": "node scripts/handle-vcl-response.js",
+    "reply": "node scripts/vcl-api.js reply",
+    "ask": "node scripts/vcl-api.js ask",
+    "changelog": "node scripts/vcl-api.js changelog"
   },
   "keywords": [
     "openclaw",

@@ -2,55 +2,80 @@
 
 A deterministic, approval-gated feedback loop for **Vibe Coding List (VCL)** projects running with **OpenClaw**.
 
-This repo gives you the safe, reusable part of the workflow:
+This repo now covers both sides of the loop:
 
-1. **Poll VCL Agent Insights** for feedback
-2. **Detect what is new or still pending**
-3. **Notify you through OpenClaw**
-4. **Wait for explicit human approval** (`OK <id>` / `HOLD <id>`)
-5. **Ack handled items** so reminders stop
+1. **Read from VCL**
+   - poll Agent Insights / project feedback
+   - detect what is new or still pending
+   - notify a human through OpenClaw
+2. **Write back to VCL**
+   - reply inside feedback threads
+   - ask clarifying questions
+   - post changelog / update entries
+   - link shipped updates back to the feedback that influenced them
 
 It is intentionally **not** a fully autonomous coding bot.
 The polling path is deterministic and cheap. No LLM is required just to detect new feedback.
 
 ---
 
-## Why this exists
+## What problem this solves
 
-If you wire VCL feedback directly into an LLM loop, things get messy fast:
+If you wire VCL feedback straight into an LLM loop, things get messy fast:
 
 - repeated alerts
 - duplicate handling
-- unclear state
+- fuzzy state
 - accidental auto-action without approval
 - hard-to-debug polling behavior
 
-This repo keeps the critical loop simple and auditable:
+This repo keeps the critical control plane simple and auditable:
 
-**fetch → normalize → fingerprint → compare → notify → wait → ack**
+**fetch → normalize → fingerprint → compare → notify → wait → ack / ask / reply / update**
 
 That makes it much easier to trust.
 
 ---
 
-## What you get
+## What this repo does
+
+### Read-side / control-plane scripts
 
 - `scripts/bootstrap-vcl-feedback-loop.js`
-  - Extracts the VCL insights URL + API key from the curl example shown in the VCL UI
-  - Writes a minimal local config file
+  - extracts the VCL URL + project API key from the curl example shown in the VCL UI
+  - writes a minimal local config file
 - `scripts/poll-vcl-feedback.js`
-  - Fetches feedback
-  - Tracks pending vs acked vs notified items
-  - Prints messages or sends them via OpenClaw
+  - fetches feedback
+  - tracks pending vs acked vs notified items
+  - prints surfaced findings or sends them through OpenClaw
 - `scripts/ack-vcl-feedback.js`
-  - Marks one or more feedback items as handled so reminders stop
+  - marks one or more feedback items as handled so reminders stop
+
+### Write-side helper scripts
+
+- `scripts/vcl-api.js`
+  - replies to a feedback thread
+  - asks a fresh clarification question
+  - posts a changelog/update entry
+  - can attach `linkedFeedbackIds` so the update shows which feedback influenced the shipped change
+- `scripts/handle-vcl-response.js`
+  - parses natural human responses like:
+    - `OK 24`
+    - `HOLD 24`
+    - `ASK 24 Could you clarify whether this is mobile-only?`
+    - or, when only one item is pending, even just a plain question
+
+### Docs and examples
+
 - copy-paste setup docs
 - example config files
 - safe cron example
+- a real public example project: **Tap Flash**
+  - <https://vibecodinglist.com/projects/tap-flash-self-improving-game>
 
 ---
 
-## What this does **not** do
+## What this repo does **not** do
 
 This repo does **not**:
 
@@ -62,36 +87,87 @@ This repo does **not**:
 
 That last point is deliberate.
 
-Use this repo for the **deterministic control plane**.
+Use this repo for the **deterministic feedback/control layer**.
 Then attach your own project-specific automation after approval.
 
 ---
 
-## Architecture
+## Current workflow model
 
 ```text
-VCL Agent Insights
-        |
-        v
+VCL project page
+  └─ Agent API tab
+       ├─ create scoped API key
+       ├─ read feedback / replies
+       ├─ reply to feedback threads
+       └─ post changelog updates
+
+         V
+bootstrap-vcl-feedback-loop.js
+  └─ saves local config
+
+         V
 poll-vcl-feedback.js
-  - fetches feed
-  - normalizes findings
-  - computes fingerprint
-  - compares to local state
-  - identifies pending/unnotified items
-        |
-        v
-OpenClaw notification
-        |
-        v
-Human replies: OK <id> / HOLD <id>
-        |
-        v
-ack-vcl-feedback.js
-        |
-        v
-(optional) project-specific implementation/deploy/reply flow
+  ├─ fetches current VCL feed
+  ├─ normalizes findings
+  ├─ fingerprints the feed
+  ├─ compares with local state
+  ├─ identifies pending + unnotified items
+  └─ sends a notification via OpenClaw
+
+         V
+Human replies
+  ├─ OK <id>
+  ├─ HOLD <id>
+  └─ ASK <id> <question>
+
+         V
+handle-vcl-response.js / vcl-api.js
+  ├─ ack handled items
+  ├─ post clarifying questions
+  ├─ post thread replies
+  └─ post changelog updates linked to feedback ids
+
+         V
+(optional) project-specific implementation / test / deploy flow
 ```
+
+---
+
+## Getting Agent API access in VCL
+
+Once a project has been added to **Vibe Coding List**, go to that project's page and open the **Agent API** tab.
+
+There you can create a project API key scoped for actions like:
+
+- **read feedback**
+- **reply to feedback**
+- **post updates in the changelog**
+
+VCL also shows an example curl command there. That curl example is the easiest way to bootstrap this repo.
+
+> Keep project API keys out of git-tracked files.
+
+---
+
+## Real example: Tap Flash
+
+A public example project using this style of workflow:
+
+**Tap Flash — self-improving game**
+<https://vibecodinglist.com/projects/tap-flash-self-improving-game>
+
+The live Tap Flash workflow that inspired this repo currently supports:
+
+- polling the VCL feed
+- notifying a human when new feedback arrives
+- `OK` / `HOLD` approval gating
+- `ASK` clarification questions back into the thread
+- replying after a requested change ships
+- posting changelog updates after deploy
+- linking changelog entries to the feedback that influenced the update
+
+That broader end-to-end flow is why this repo now documents both the read side and the write side clearly.
 
 ---
 
@@ -99,14 +175,15 @@ ack-vcl-feedback.js
 
 - Node.js 18+ (Node 20+ recommended)
 - OpenClaw installed and working
-- A VCL project with Agent Insights enabled
-- The VCL **project API key**
-- The VCL **example curl command** from the builder UI
+- a VCL project with Agent API access
+- a VCL project API key
+- the VCL example curl command from the project page
 
 Optional but recommended:
 
-- a Telegram or other OpenClaw-routed destination for notifications
-- cron available on the machine
+- Telegram or another OpenClaw-routed destination for notifications
+- cron on the machine
+- a project-specific implementation/deploy script if you want full automation after approval
 
 ---
 
@@ -119,9 +196,9 @@ git clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop.git
 cd openclaw-vcl-feedback-loop
 ```
 
-### 2) Copy the curl example from VCL into a file
+### 2) Copy the curl example from the VCL project page
 
-In the VCL UI, copy the exact example curl command into a local file:
+On the project page, open **Agent API** and copy the exact curl example into a local file:
 
 ```bash
 nano ~/vcl-curl.txt
@@ -150,7 +227,7 @@ This writes a local config file to:
 
 It extracts:
 
-- the insights URL
+- the insights or feed URL
 - the project API key
 
 It prints only a **redacted** API key summary, not the full key.
@@ -165,14 +242,14 @@ node scripts/poll-vcl-feedback.js --new-message
 
 Expected behavior:
 
-- JSON mode prints counts and state path
+- JSON mode prints counts and the state path
 - `--message` prints current pending items
 - `--new-message` prints only pending items that have not yet been notified
 - if there is nothing pending, message modes print `NO_NEW_FEEDBACK`
 
 ### 5) Wire notifications to OpenClaw
 
-If you already know the destination, you can include it during bootstrap:
+If you already know the destination, include it during bootstrap:
 
 ```bash
 node scripts/bootstrap-vcl-feedback-loop.js \
@@ -192,39 +269,43 @@ node scripts/poll-vcl-feedback.js --notify-openclaw
 
 This sends only **pending items that have not yet been marked as notified**.
 
-### 7) Ack handled feedback
+### 7) Handle a response
 
-After you decide what to do with a finding:
+Ack a handled item directly:
 
 ```bash
 node scripts/ack-vcl-feedback.js 24
 ```
 
-Or ack several at once:
+Or use the response parser:
 
 ```bash
-node scripts/ack-vcl-feedback.js 24 25 26
+node scripts/handle-vcl-response.js "OK 24"
+node scripts/handle-vcl-response.js "HOLD 24"
+node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this issue is mobile-only?"
 ```
 
 ---
 
-## Recommended human approval flow
+## Approval + reply model
 
 The simplest safe convention is:
 
 - `OK 24` → approved for implementation
 - `HOLD 24` → do not implement now, but stop reminders
+- `ASK 24 <question>` → ask a clarifying question back in the VCL thread
 
-If you have more than one pending item, always include the id.
-If there is only one pending item, plain `OK` / `HOLD` may be okay in your own project, but explicit ids are better.
+If more than one item is pending, always include the id.
+If only one item is pending, plain `OK`, `HOLD`, or even a plain question can be inferred by `handle-vcl-response.js`.
 
 Recommended sequence:
 
 1. Poll and notify deterministically
-2. Wait for explicit human approval
-3. Map the approval to a specific finding id
-4. Ack the finding with `ack-vcl-feedback.js <id>`
-5. Only after `OK` should downstream automation implement, test, deploy, and reply back to VCL
+2. Wait for explicit human approval or question
+3. Map the response to a specific feedback id
+4. Ack the item on `OK` or `HOLD`
+5. Only after `OK` should downstream automation implement, test, deploy, and verify
+6. After deploy, optionally post a thread reply and a changelog update linked to the feedback ids that influenced the change
 
 ---
 
@@ -385,6 +466,57 @@ Ack multiple findings:
 node scripts/ack-vcl-feedback.js 24 25
 ```
 
+### `handle-vcl-response.js`
+
+Parse human responses and do the right thing:
+
+```bash
+node scripts/handle-vcl-response.js "OK 24"
+node scripts/handle-vcl-response.js "HOLD 24"
+node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this is mobile-only?"
+```
+
+If exactly one item is pending, these also work:
+
+```bash
+node scripts/handle-vcl-response.js "OK"
+node scripts/handle-vcl-response.js "HOLD"
+node scripts/handle-vcl-response.js "Could you ask whether this is only happening on Safari?"
+```
+
+### `vcl-api.js`
+
+Reply to a feedback thread:
+
+```bash
+node scripts/vcl-api.js reply --parent-id 24 --content "Thanks — this is fixed in the latest build."
+```
+
+Ask a new clarification question:
+
+```bash
+node scripts/vcl-api.js ask --content "Could someone confirm whether this issue is reproducible on mobile too?"
+```
+
+Post a changelog/update entry:
+
+```bash
+node scripts/vcl-api.js changelog \
+  --content "- Improved contrast on the HUD\n- Reduced accidental taps near the edge" \
+  --linked-feedback-ids "24,26"
+```
+
+Post a changelog/update entry with a follow-up request for more feedback:
+
+```bash
+node scripts/vcl-api.js changelog \
+  --content "- Added a clearer restart state after misses" \
+  --linked-feedback-ids "31" \
+  --feedback-request "Would love feedback on whether the restart flow now feels obvious on mobile."
+```
+
+The `linkedFeedbackIds` field is what lets the changelog entry show which feedback influenced the update.
+
 ---
 
 ## Suggested project layout when you extend this
@@ -395,15 +527,30 @@ For a full end-to-end implementation loop, keep your project-specific logic sepa
 ```text
 my-project/
   scripts/
-    parse-approval-reply.js
     implement-approved-change.js
     deploy-and-verify.js
-    reply-to-vcl-thread.js
+    finalize-approved-feedback.js
   .openclaw/
     vcl-feedback-loop.json
 ```
 
-That keeps the generic polling/state layer reusable while letting each project define its own coding, testing, deploy, and changelog behavior.
+That keeps the generic feedback/state layer reusable while letting each project define its own coding, testing, deploy, and release behavior.
+
+---
+
+## Recommended end-to-end pattern
+
+A strong practical pattern is:
+
+1. `poll-vcl-feedback.js --notify-openclaw`
+2. human replies `OK`, `HOLD`, or `ASK`
+3. `handle-vcl-response.js` parses the reply
+4. your project-specific automation implements the approved change
+5. your project-specific deploy verification runs
+6. `vcl-api.js reply ...` posts back into the original thread
+7. `vcl-api.js changelog ... --linked-feedback-ids ...` posts a release/update entry showing what feedback influenced the change
+
+That pattern stays safe because the expensive or creative parts happen **after** a clear human decision.
 
 ---
 
@@ -411,7 +558,7 @@ That keeps the generic polling/state layer reusable while letting each project d
 
 ### `Missing VCL config`
 
-You have not provided enough config for the poller.
+You have not provided enough config for the script you are running.
 Use one of:
 
 - `url + apiKey`
@@ -429,7 +576,7 @@ Check:
 - OpenClaw is installed and on PATH
 - `openclaw message send` works in your environment
 - the `notify.target` is correct
-- the selected `channel`/`account` is valid
+- the selected `channel` / `account` is valid
 
 ### Repeated reminders for the same item
 
@@ -439,6 +586,21 @@ Run:
 ```bash
 node scripts/ack-vcl-feedback.js <id>
 ```
+
+or:
+
+```bash
+node scripts/handle-vcl-response.js "OK <id>"
+```
+
+### Write actions fail
+
+Check:
+
+- the project API key has the needed scope
+- the project id is correct
+- the Agent API tab is enabled for that project
+- you are posting to the right VCL host
 
 ### Config already exists
 
@@ -453,11 +615,11 @@ node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt --force
 
 ## Security notes
 
-- Keep VCL API keys out of git-tracked files
-- Prefer local config or environment variables
-- Keep the polling loop deterministic and auditable
-- Require explicit human approval before implementation or deploy steps
-- Do not let downstream coding/deploy automation run automatically just because polling found a new item
+- keep VCL API keys out of git-tracked files
+- prefer local config or environment variables
+- keep the polling loop deterministic and auditable
+- require explicit human approval before implementation or deploy steps
+- do not let downstream coding/deploy automation run automatically just because polling found a new item
 
 ---
 
@@ -469,10 +631,12 @@ This repo is a good fit if you want:
 - deterministic state management
 - deduplicated notifications
 - a clean approval gate before code changes happen
+- the ability to ask follow-up questions in VCL threads
+- the ability to post shipped updates back to VCL and link them to the feedback that inspired them
 
-It is especially useful if you are building a workflow like:
+It is especially useful if you want a workflow like:
 
-> VCL feedback arrives → notify me immediately → I reply OK/HOLD → only then does an agent implement and deploy.
+> VCL feedback arrives → notify me immediately → I reply OK / HOLD / ASK → only then does an agent implement and deploy → then the system replies in-thread and posts a changelog update linked to the influencing feedback.
 
 ---
 
