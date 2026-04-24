@@ -15,7 +15,7 @@ This repo now covers both sides of the loop:
    - link shipped updates back to the feedback that influenced them
 
 It is intentionally **not** a fully autonomous coding bot.
-The polling path is deterministic and cheap. No LLM is required just to detect new feedback.
+The polling path is deterministic and cheap. No LLM is required to detect new feedback.
 
 **Best way to use this repo:** ask your own OpenClaw agent to set it up for you, then use the manual commands below only if you want to inspect or reproduce the setup by hand.
 
@@ -49,7 +49,7 @@ Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop and set up thi
 
 The agent should then be able to create the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
 
-If sharing the project URL is awkward, the user can send just the project id instead.
+If sharing the project URL is inconvenient, the user can send just the project id instead.
 If needed, the **Read insights** curl template from the Agent API tab can still be used as a fallback input.
 
 ### Manual fallback quick start
@@ -123,9 +123,9 @@ Expected behavior:
 
 #### 5) Wire notifications to OpenClaw
 
-If you already know the destination, put it directly in the config file under `notify`, or include it during bootstrap if you are using the curl-based fallback.
+If you already know the destination, put it directly in the config file under `notify`. If you are using the curl-based fallback, you can also include it during bootstrap.
 
-### 6) Connect Telegram the same way as this example setup
+### 6) Connect Telegram
 
 This setup sends notifications through **OpenClaw's Telegram routing**, not by talking to Telegram directly from the script.
 
@@ -420,7 +420,7 @@ I added my project to VibeCodingList. Help me connect the Agent API, send feedba
 ```
 
 ```text
-Use this repo to set up the same workflow you built for Tap Flash: polling, Telegram alerts, approval gating, thread replies, and changelog updates.
+Use this repo to set up the same workflow as the Tap Flash example: polling, Telegram alerts, approval gating, thread replies, and changelog updates.
 ```
 
 The manual CLI examples below still matter, but they should be treated as the **fallback path** or the documentation for what the agent is doing on your behalf.

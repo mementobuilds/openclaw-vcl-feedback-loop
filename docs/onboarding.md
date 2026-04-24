@@ -35,7 +35,7 @@ Fallback: if needed, the user can also copy the **Read insights** curl template 
 
 ## What the agent should do next
 
-1. Create local config from the project id/url + API key.
+1. Create local config from the project id or project URL plus the API key.
 2. Add Telegram notify settings.
 3. Verify polling works.
 4. Test notification delivery.
