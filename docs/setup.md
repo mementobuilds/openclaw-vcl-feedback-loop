@@ -20,7 +20,7 @@ That page gives you:
   - post changelog updates
 - an example curl command you can feed into the bootstrap script
 
-## Telegram setup for the Tap Flash-style flow
+## Telegram setup for the default flow
 
 The scripts do **not** talk to Telegram directly.
 They send through **OpenClaw** using `openclaw message send`.

@@ -116,7 +116,7 @@ Or add it later to the config file.
 
 ### 6) Connect Telegram the same way as this example setup
 
-The Tap Flash-style setup sends notifications through **OpenClaw's Telegram routing**, not by talking to Telegram directly from the script.
+This setup sends notifications through **OpenClaw's Telegram routing**, not by talking to Telegram directly from the script.
 
 That means the important pieces are:
 
@@ -378,7 +378,7 @@ handle-vcl-response.js / vcl-api.js
 
 ## Recommended setup style: prompt-first, not terminal-first
 
-The ideal experience is the same one Joe used here:
+The ideal experience is the same pattern used here:
 **talk to OpenClaw and let the agent set it up for you.**
 
 In practice, that means the human mostly provides:
