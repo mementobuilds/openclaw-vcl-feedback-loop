@@ -44,7 +44,7 @@ So for a Telegram-based setup, make sure:
 Prompt-first version:
 
 ```text
-Set this up like Tap Flash and send VCL notifications to my Telegram chat.
+Set this up and send VCL notifications to my Telegram chat.
 ```
 
 ## Safe cron example

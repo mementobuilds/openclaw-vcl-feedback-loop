@@ -212,7 +212,7 @@ Then the agent can do the setup work:
 ### Good example prompts
 
 ```text
-Set up the VCL feedback loop for my project using this Agent API curl snippet. Notify me on Telegram and make it work like Tap Flash.
+Set up the VCL feedback loop for my project using this Agent API curl snippet. Notify me on Telegram.
 ```
 
 ```text
@@ -245,7 +245,7 @@ Set up this VCL feedback loop for me. Use Telegram notifications. Here is the Ag
 If you want the Tap Flash-style experience, also say:
 
 ```text
-Make it like the Tap Flash setup: Telegram alerts, OK / HOLD / ASK handling, and the ability to reply in VCL threads and post changelog updates tied to feedback ids.
+Use the default setup with Telegram alerts, OK / HOLD / ASK handling, VCL thread replies, and changelog updates linked to feedback ids.
 ```
 
 The agent should then be able to bootstrap the local config, test the poller, add notify settings, and install the cron job with minimal manual work from the user.
@@ -367,7 +367,7 @@ Or edit the config later:
 If the user wants the setup mostly by chat, the practical prompt is something like:
 
 ```text
-Set this up like Tap Flash and send VCL alerts to my Telegram chat. My Telegram is already connected to OpenClaw.
+Set this up with VCL alerts to my Telegram chat. My Telegram is already connected to OpenClaw.
 ```
 
 If the Telegram account is not connected yet, handle that first in OpenClaw, then come back and finish the VCL loop setup.
@@ -663,9 +663,9 @@ A strong practical pattern is:
 
 That pattern stays safe because the expensive or creative parts happen **after** a clear human decision.
 
-### If you want the same style of setup as the Tap Flash example
+### Recommended user experience
 
-The closest description is:
+The default setup in this repo assumes:
 
 - the VCL project already exists
 - the Agent API key comes from the VCL project page
@@ -677,13 +677,14 @@ The closest description is:
 So the practical user experience should feel like:
 
 ```text
-User: Set up the same VCL feedback loop style as the Tap Flash example.
+User: Set up the VCL feedback loop for my project.
 Agent: Send me the Agent API curl snippet and tell me which Telegram chat to notify.
 User: [provides snippet / destination]
 Agent: I’ll wire the config, test polling, test Telegram delivery, and set up the 5-minute cron.
 ```
 
 That is the recommended UX for this repo.
+Tap Flash is included as a public example of this workflow, not as a separate mode or special configuration.
 The manual commands in this README exist so the setup remains inspectable and reproducible, but the preferred path is still **prompt the agent and let it do the work**.
 
 ---
