@@ -17,7 +17,7 @@ This repo now covers both sides of the loop:
 It is intentionally **not** a fully autonomous coding bot.
 The polling path is deterministic and cheap. No LLM is required to detect new feedback.
 
-**Best way to use this repo:** ask your own OpenClaw agent to set it up for you, then use the manual commands below only if you want to inspect or reproduce the setup by hand.
+**Best way to use this repo:** ask your own OpenClaw agent to set it up for you, then use the reference below only if you want to inspect or reproduce the setup by hand.
 
 ---
 
@@ -78,25 +78,39 @@ If anything is missing, figure out what you can automatically
 and ask me only for the remaining required inputs.
 ```
 
-The agent should then be able to create the local config, test the poller, add notify settings, install the cron job, inspect the target repo, and work with the user to complete the implementation/deploy side with minimal manual setup.
+Recommended setup style: prompt-first, not terminal-first.
 
-If sharing the project URL is inconvenient, the user can send just the project id instead.
-If needed, the **Read insights** curl template from the Agent API tab can still be used as a fallback input.
+The ideal experience is: talk to OpenClaw and let the agent set it up for you.
+The human mostly provides:
+- the VCL project page or the Agent API curl snippet
+- where notifications should go
+- whether they want Telegram alerts
+- whether they want OK / HOLD / ASK handling and post-deploy replies / changelog updates
 
-### Manual fallback quick start
+The reference below is the fallback path. It is mainly there for inspection, debugging, or reproducing what the agent is doing on the user's behalf.
 
-If you want to do the same setup by hand, this is the shortest path.
+---
 
-#### 1) Clone this repo
+## Requirements
 
-```bash
-git clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop.git
-cd openclaw-vcl-feedback-loop
-```
+Required:
+- Node.js 18+ (Node 20+ recommended)
+- OpenClaw installed and working
+- a VCL project with Agent API access
+- a VCL project API key
 
-#### 2) Create the local config
+Optional but usually needed for the full workflow:
+- Telegram or another OpenClaw-routed destination for notifications
+- access to the target project source repo
+- a deploy method the agent can trigger after making approved fixes
+- a public URL or other deploy-verification path
+- cron on the machine
 
-Save this at:
+---
+
+## Minimal config
+
+Save local config at:
 
 ```text
 ~/.openclaw/workspace/.openclaw/vcl-feedback-loop.json
@@ -112,7 +126,7 @@ Minimal config:
 }
 ```
 
-Add this if you also want Telegram alerts through OpenClaw:
+With Telegram alerts through OpenClaw:
 
 ```json
 {
@@ -132,15 +146,17 @@ Notes:
 - or resolve a public slug with `curl https://vibecodinglist.com/api/projects/by-slug/<slug>`
 - Telegram delivery uses **OpenClaw routing**, so OpenClaw must already have a reachable Telegram account connected
 
-#### 3) Optional: bootstrap from the Agent API curl template
+---
 
-Instead of writing the config by hand:
+## Command reference
+
+Bootstrap config from the Agent API curl template:
 
 ```bash
 node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt
 ```
 
-Or include Telegram settings during bootstrap:
+Include Telegram settings during bootstrap:
 
 ```bash
 node scripts/bootstrap-vcl-feedback-loop.js \
@@ -150,35 +166,37 @@ node scripts/bootstrap-vcl-feedback-loop.js \
   --account default
 ```
 
-#### 4) Verify polling
+Poll current status:
 
 ```bash
 node scripts/poll-vcl-feedback.js
+```
+
+Show current pending items:
+
+```bash
 node scripts/poll-vcl-feedback.js --message
+```
+
+Show only not-yet-notified pending items:
+
+```bash
 node scripts/poll-vcl-feedback.js --new-message
 ```
 
-Expected:
-- default mode prints JSON counts and state path
-- `--message` prints current pending items
-- `--new-message` prints only not-yet-notified pending items
-- message modes print `NO_NEW_FEEDBACK` when nothing is pending
-
-#### 5) Send a test notification
+Send notifications through OpenClaw:
 
 ```bash
 node scripts/poll-vcl-feedback.js --notify-openclaw
 ```
 
-#### 6) Handle responses
-
-Ack directly:
+Ack handled feedback:
 
 ```bash
 node scripts/ack-vcl-feedback.js 24
 ```
 
-Or parse simple chat responses:
+Parse simple human responses:
 
 ```bash
 node scripts/handle-vcl-response.js "OK 24"
@@ -186,637 +204,42 @@ node scripts/handle-vcl-response.js "HOLD 24"
 node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this issue is mobile-only?"
 ```
 
----
+Post back into VCL:
 
-## Requirements
-
-- Node.js 18+ (Node 20+ recommended)
-- OpenClaw installed and working
-- a VCL project with Agent API access
-- a VCL project API key
-- your VCL project page URL or project id
-
-Optional but recommended:
-
-- Telegram or another OpenClaw-routed destination for notifications
-- access to the target project source repo
-- a deploy method the agent can trigger from CLI after making fixes
-- cron on the machine
-- a project-specific implementation/deploy script if you want full automation after approval
+```bash
+node scripts/vcl-api.js reply ...
+node scripts/vcl-api.js changelog ... --linked-feedback-ids ...
+```
 
 ---
 
-## Getting Agent API access in VCL
+## Approval format
 
-Once a project has been added to **VibeCodingList**, go to that project's page and open the **Agent API** tab.
-
-There you can create a project API key scoped for actions like:
-
-- **read feedback**
-- **reply to feedback**
-- **post updates in the changelog**
-
-The easiest setup is to give your agent the project page URL or project id plus the API key. The **Read insights** curl template on that page is still useful as a fallback bootstrap input.
-
-> Keep project API keys out of git-tracked files.
-
----
-
-## Approval + reply model
-
-The simplest safe convention is:
+Use these reply conventions:
 
 - `OK 24` → approved for implementation
 - `HOLD 24` → do not implement now, but stop reminders
 - `ASK 24 <question>` → ask a clarifying question back in the VCL thread
 
-If more than one item is pending, always include the id.
-If only one item is pending, plain `OK`, `HOLD`, or even a plain question can be inferred by `handle-vcl-response.js`.
-
-Recommended sequence:
-
-1. Poll and notify deterministically
-2. Wait for explicit human approval or question
-3. Map the response to a specific feedback id
-4. Ack the item on `HOLD`
-5. Only after `OK` should downstream automation implement, test, deploy, and verify the public deployment
-6. Only after public deploy verification should the workflow post a thread reply, post a changelog update, and ack the feedback item
+If more than one item is pending, include the id.
 
 ---
 
-## What else you need for end-to-end automation
-
-This repo handles the **feedback/control loop**.
-To actually ship approved fixes, the target project still needs an execution environment the agent can use.
-
-In practice, that usually means:
-
-- the target project's source repo exists and is accessible to OpenClaw
-- the agent can edit that repo locally or clone it from a remote such as GitHub
-- there is a deploy path the agent can trigger from CLI after making fixes
-- there is some way to verify the deploy before posting the VCL reply/changelog follow-up
-
-That deploy path can be many things:
-
-- Railway
-- Vercel
-- Netlify
-- GitHub Actions
-- a VPS or self-hosted box
-- a local deploy script
-
-GitHub and Railway are common examples, but they are not required. The important part is that the agent has a repo it can change and a CLI-capable path to deploy the result.
-
-## Real example: Tap Flash
-
-A public example project using this style of workflow:
-
-**Tap Flash — self-improving game**
-<https://vibecodinglist.com/projects/tap-flash-self-improving-game>
-
-The live Tap Flash workflow that inspired this repo currently supports:
-
-- polling the VCL feed
-- notifying a human when new feedback arrives
-- `OK` / `HOLD` approval gating
-- `ASK` clarification questions back into the thread
-- replying after a requested change ships
-- posting changelog updates after deploy
-- linking changelog entries to the feedback that influenced the update
-
-That broader end-to-end flow is why this repo now documents both the read side and the write side clearly.
-
----
-
-## What problem this solves
-
-If you wire VCL feedback straight into an LLM loop, things get messy fast:
-
-- repeated alerts
-- duplicate handling
-- fuzzy state
-- accidental auto-action without approval
-- hard-to-debug polling behavior
-
-This repo keeps the critical control plane simple and auditable:
-
-**fetch → normalize → fingerprint → compare → notify → wait → ack / ask / reply / update**
-
-That makes it much easier to trust.
-
----
-
-## What this repo does
-
-### Read-side / control-plane scripts
-
-- `scripts/bootstrap-vcl-feedback-loop.js`
-  - extracts the VCL URL + project API key from the curl example shown in the VCL UI
-  - writes a minimal local config file
-- `scripts/poll-vcl-feedback.js`
-  - fetches feedback
-  - tracks pending vs acked vs notified items
-  - prints surfaced findings or sends them through OpenClaw
-- `scripts/ack-vcl-feedback.js`
-  - marks one or more feedback items as handled so reminders stop
-
-### Write-side helper scripts
-
-- `scripts/vcl-api.js`
-  - replies to a feedback thread
-  - asks a fresh clarification question
-  - posts a changelog/update entry
-  - can attach `linkedFeedbackIds` so the update shows which feedback influenced the shipped change
-- `scripts/handle-vcl-response.js`
-  - parses natural human responses like:
-    - `OK 24`
-    - `HOLD 24`
-    - `ASK 24 Could you clarify whether this is mobile-only?`
-    - or, when only one item is pending, even just a plain question
-
-### Docs and examples
-
-- copy-paste setup docs
-- example config files
-- safe cron example
-- a real public example project: **Tap Flash**
-  - <https://vibecodinglist.com/projects/tap-flash-self-improving-game>
-
----
-
-## What this repo does **not** do
-
-This repo does **not**:
-
-- store secrets in git-tracked files
-- auto-approve feedback
-- auto-implement code changes without explicit human approval
-- guess your deploy flow
-- embed an LLM inside the polling loop
-
-That last point is deliberate.
-
-Use this repo for the **deterministic feedback/control layer**.
-Then attach your own project-specific automation after approval.
-
----
-
-## Current workflow model
-
-```text
-VCL project page
-  └─ Agent API tab
-       ├─ create scoped API key
-       ├─ read feedback / replies
-       ├─ reply to feedback threads
-       └─ post changelog updates
-
-         V
-bootstrap-vcl-feedback-loop.js
-  └─ saves local config
-
-         V
-poll-vcl-feedback.js
-  ├─ fetches current VCL feed
-  ├─ normalizes findings
-  ├─ fingerprints the feed
-  ├─ compares with local state
-  ├─ identifies pending + unnotified items
-  └─ sends a notification via OpenClaw
-
-         V
-Human replies
-  ├─ OK <id>
-  ├─ HOLD <id>
-  └─ ASK <id> <question>
-
-         V
-handle-vcl-response.js / vcl-api.js
-  ├─ ack handled items
-  ├─ post clarifying questions
-  ├─ post thread replies
-  └─ post changelog updates linked to feedback ids
-
-         V
-(optional) project-specific implementation / test / deploy flow
-```
-
----
-
-## Recommended setup style: prompt-first, not terminal-first
-
-The ideal experience is the same pattern used here:
-**talk to OpenClaw and let the agent set it up for you.**
-
-In practice, that means the human mostly provides:
-
-- the VCL project page or curl snippet from the **Agent API** tab
-- where notifications should go
-- whether they want Telegram alerts
-- whether they want `OK / HOLD / ASK` handling and post-deploy replies/changelog updates
-
-Then the agent can do the setup work:
-
-- create the local config
-- wire the VCL URL and API key into the config
-- add Telegram notify settings
-- test polling
-- test notifications
-- add the cron job
-- explain how to reply with `OK`, `HOLD`, or `ASK`
-
-### Good example prompts
-
-```text
-Clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop
-and set up the full VCL workflow for my project.
-
-My VCL project is:
-https://vibecodinglist.com/projects/my-project
-
-This is the API key:
-...
-
-The target project repo is:
-https://github.com/me/my-project
-
-I want Telegram alerts plus OK / HOLD / ASK handling.
-```
-
-```text
-I added my project to VibeCodingList. Help me connect the Agent API, wire Telegram alerts, connect the target source repo, and set up the implementation/deploy flow so approved fixes can be shipped and posted back to VCL.
-```
-
-```text
-Set this up end to end: polling, Telegram alerts, approval gating, thread replies, changelog updates, target repo access, and deployment after approved fixes. Figure out the missing pieces with me instead of making me do the setup manually.
-```
-
-The manual CLI examples below still matter, but they should be treated as the **fallback path** or the documentation for what the agent is doing on your behalf.
-
----
-
-## Config
-
-Default config path:
-
-```text
-~/.openclaw/workspace/.openclaw/vcl-feedback-loop.json
-```
-
-### Minimal config using a full URL
-
-```json
-{
-  "url": "https://YOUR-VCL-HOST/api/project-intelligence/v1/projects/26/insights?range=30d&source=all",
-  "apiKey": "YOUR_VCL_PROJECT_API_KEY"
-}
-```
-
-### Minimal config using base URL + project id
-
-```json
-{
-  "baseUrl": "https://YOUR-VCL-HOST",
-  "projectId": 26,
-  "apiKey": "YOUR_VCL_PROJECT_API_KEY",
-  "range": "30d",
-  "source": "all"
-}
-```
-
-### Config with OpenClaw notifications
-
-```json
-{
-  "baseUrl": "https://YOUR-VCL-HOST",
-  "projectId": 26,
-  "apiKey": "YOUR_VCL_PROJECT_API_KEY",
-  "notify": {
-    "channel": "telegram",
-    "target": "CHAT_OR_USER_ID",
-    "account": "default"
-  }
-}
-```
-
-> Do not commit real API keys, chat ids, or other secrets to git.
-
----
-
-## Environment variables
-
-These scripts can be driven by config, environment variables, or CLI flags.
-
-### VCL config
-
-- `VCL_FEEDBACK_CONFIG_PATH`
-- `VCL_FEEDBACK_STATE_PATH`
-- `VCL_FEEDBACK_URL`
-- `VCL_FEEDBACK_API_KEY`
-- `VCL_BASE_URL`
-- `VCL_PROJECT_ID`
-- `VCL_RANGE`
-- `VCL_SOURCE`
-
-### OpenClaw notification config
-
-- `OPENCLAW_NOTIFY_CHANNEL`
-- `OPENCLAW_NOTIFY_TARGET`
-- `OPENCLAW_NOTIFY_ACCOUNT`
-- `OPENCLAW_BIN`
-- `VCL_MAX_ITEMS_PER_MESSAGE`
-
-CLI flags override config for the current run.
-
----
-
-## Cron
-
-A safe starting interval is every **5 minutes**.
-
-Example:
-
-```cron
-*/5 * * * * cd /ABSOLUTE/PATH/TO/openclaw-vcl-feedback-loop && /usr/bin/node scripts/poll-vcl-feedback.js --notify-openclaw >> ~/.openclaw/workspace/.state/vcl-feedback-loop-cron.log 2>&1
-```
-
-Adjust the Node path if your environment uses a different one.
-
----
-
-## Script reference
-
-### `bootstrap-vcl-feedback-loop.js`
-
-Bootstrap a config from the VCL curl snippet:
-
-```bash
-node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt
-```
-
-Or pass values directly:
-
-```bash
-node scripts/bootstrap-vcl-feedback-loop.js \
-  --url https://YOUR-VCL-HOST/api/project-intelligence/v1/projects/26/insights?range=30d&source=all \
-  --api-key YOUR_PROJECT_API_KEY
-```
-
-Optional notify wiring:
-
-```bash
-node scripts/bootstrap-vcl-feedback-loop.js \
-  --curl-file ~/vcl-curl.txt \
-  --channel telegram \
-  --target CHAT_ID \
-  --account default
-```
-
-### `poll-vcl-feedback.js`
-
-Plain JSON status:
-
-```bash
-node scripts/poll-vcl-feedback.js
-```
-
-Show current pending findings:
-
-```bash
-node scripts/poll-vcl-feedback.js --message
-```
-
-Show only unnotified pending findings:
-
-```bash
-node scripts/poll-vcl-feedback.js --new-message
-```
-
-Send notification through OpenClaw:
-
-```bash
-node scripts/poll-vcl-feedback.js --notify-openclaw
-```
-
-### `ack-vcl-feedback.js`
-
-Ack a handled finding:
-
-```bash
-node scripts/ack-vcl-feedback.js 24
-```
-
-Ack multiple findings:
-
-```bash
-node scripts/ack-vcl-feedback.js 24 25
-```
-
-### `handle-vcl-response.js`
-
-Parse human responses and do the right thing:
-
-```bash
-node scripts/handle-vcl-response.js "OK 24"
-node scripts/handle-vcl-response.js "HOLD 24"
-node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this is mobile-only?"
-```
-
-If exactly one item is pending, these also work:
-
-```bash
-node scripts/handle-vcl-response.js "OK"
-node scripts/handle-vcl-response.js "HOLD"
-node scripts/handle-vcl-response.js "Could you ask whether this is only happening on Safari?"
-```
-
-### `vcl-api.js`
-
-Reply to a feedback thread:
-
-```bash
-node scripts/vcl-api.js reply --parent-id 24 --content "Thanks — this is fixed in the latest build."
-```
-
-Ask a new clarification question:
-
-```bash
-node scripts/vcl-api.js ask --content "Could someone confirm whether this issue is reproducible on mobile too?"
-```
-
-Post a changelog/update entry:
-
-```bash
-node scripts/vcl-api.js changelog \
-  --content "- Improved contrast on the HUD\n- Reduced accidental taps near the edge" \
-  --linked-feedback-ids "24,26"
-```
-
-Post a changelog/update entry with a follow-up request for more feedback:
-
-```bash
-node scripts/vcl-api.js changelog \
-  --content "- Added a clearer restart state after misses" \
-  --linked-feedback-ids "31" \
-  --feedback-request "Would love feedback on whether the restart flow now feels obvious on mobile."
-```
-
-The `linkedFeedbackIds` field is what lets the changelog entry show which feedback influenced the update.
-
----
-
-## Suggested project layout when you extend this
-
-This repo is the reusable core.
-For a full end-to-end implementation loop, keep your project-specific logic separate:
-
-```text
-my-project/
-  scripts/
-    implement-approved-change.js
-    deploy-and-verify.js
-    finalize-approved-feedback.js
-  .openclaw/
-    vcl-feedback-loop.json
-```
-
-That keeps the generic feedback/state layer reusable while letting each project define its own coding, testing, deploy, and release behavior.
-
----
-
-## Recommended end-to-end pattern
-
-A strong practical pattern is:
-
-1. `poll-vcl-feedback.js --notify-openclaw`
-2. human replies `OK`, `HOLD`, or `ASK`
-3. `handle-vcl-response.js` parses the reply
-4. your project-specific automation implements the approved change
-5. your project-specific deploy verification runs against the live public URL
-6. only after verification passes, `vcl-api.js reply ...` posts back into the original thread
-7. only after verification passes, `vcl-api.js changelog ... --linked-feedback-ids ...` posts a release/update entry showing what feedback influenced the change
-8. only after verification passes, ack the feedback item so it stops re-alerting
-
-That pattern stays safe because the expensive or creative parts happen **after** a clear human decision, and nothing is marked shipped until the public deployment is actually verified.
-
-### Recommended user experience
-
-The default setup in this repo assumes:
-
-- the VCL project already exists
-- the Agent API key comes from the VCL project page
-- OpenClaw is already installed
-- Telegram is already connected to OpenClaw
-- the target project source repo exists and is reachable by the agent
-- there is some deploy path the agent can trigger after making approved fixes
-- the user mostly interacts by chat, not by shell
-- the user's own agent does the setup work and only asks for the missing inputs
-
-So the practical user experience should feel like:
-
-```text
-User: Set up the full VCL workflow for my project.
-Agent: I’ll clone the workflow repo, inspect what you gave me, wire the VCL config, connect Telegram routing, inspect the target project repo, and figure out what is still missing for deploy automation. I’ll only ask you for the remaining required inputs.
-User: [provides project URL/id, API key, target repo, preferred deploy target]
-Agent: I’ll test polling, test Telegram delivery, set up the 5-minute cron, connect the target repo/deploy flow, and prepare the end-to-end OK / HOLD / ASK loop.
-```
-
-That is the recommended UX for this repo.
-Tap Flash is included as a public example of this workflow, not as a separate mode or special configuration.
-The manual commands in this README exist so the setup remains inspectable and reproducible, but the preferred path is still **prompt the agent and let it do the work**.
+## Safety rules
+
+- do not store secrets in git-tracked files
+- do not auto-approve feedback
+- do not auto-implement code changes without explicit human approval
+- do not mark a change as shipped until live deploy verification has passed
+- do not embed an LLM inside the polling loop
 
 ---
 
 ## Troubleshooting
 
-### `Missing VCL config`
-
-You have not provided enough config for the script you are running.
-Use one of:
-
-- `url + apiKey`
-- `baseUrl + projectId + apiKey`
-
-### `NO_NEW_FEEDBACK`
-
-This is not an error.
-It means there are no pending, unnotified findings right now.
-
-### Notification send fails
-
-Check:
-
-- OpenClaw is installed and on PATH
-- `openclaw message send` works in your environment
-- the `notify.target` is correct
-- the selected `channel` / `account` is valid
-
-### Repeated reminders for the same item
-
-That usually means the finding has not been acked yet.
-Run:
-
-```bash
-node scripts/ack-vcl-feedback.js <id>
-```
-
-or:
-
-```bash
-node scripts/handle-vcl-response.js "OK <id>"
-```
-
-### Write actions fail
-
-Check:
-
-- the project API key has the needed scope
-- the project id is correct
-- the Agent API tab is enabled for that project
-- you are posting to the right VCL host
-
-### Config already exists
-
-The bootstrap script refuses to overwrite an existing config by default.
-Use `--force` only if you intentionally want to replace it:
-
-```bash
-node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt --force
-```
-
----
-
-## Security notes
-
-- keep VCL API keys out of git-tracked files
-- prefer local config or environment variables
-- keep the polling loop deterministic and auditable
-- require explicit human approval before implementation or deploy steps
-- do not let downstream coding/deploy automation run automatically just because polling found a new item
-
----
-
-## Who this is for
-
-This repo is a good fit if you want:
-
-- VCL feedback notifications in Telegram or another OpenClaw-routed channel
-- deterministic state management
-- deduplicated notifications
-- a clean approval gate before code changes happen
-- the ability to ask follow-up questions in VCL threads
-- the ability to post shipped updates back to VCL and link them to the feedback that inspired them
-
-It is especially useful if you want a workflow like:
-
-> VCL feedback arrives → notify me immediately → I reply OK / HOLD / ASK → only then does an agent implement and deploy → then the system replies in-thread and posts a changelog update linked to the influencing feedback.
-
----
-
-## Example
-
-<https://vibecodinglist.com/projects/tap-flash-self-improving-game>
-
-## License
-
-MIT
+Common issues:
+- bad API key or wrong project id
+- Telegram target missing or not reachable by the connected OpenClaw account
+- target repo exists but the agent cannot access or clone it
+- deploy path exists but cannot be triggered from CLI
+- `NO_NEW_FEEDBACK` because there is nothing pending right now
