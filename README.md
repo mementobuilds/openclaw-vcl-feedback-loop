@@ -85,7 +85,7 @@ If needed, the **Read insights** curl template from the Agent API tab can still 
 
 ### Manual fallback quick start
 
-If you want to do the same setup by hand, this is the equivalent flow.
+If you want to do the same setup by hand, this is the shortest path.
 
 #### 1) Clone this repo
 
@@ -94,19 +94,15 @@ git clone https://github.com/mementobuilds/openclaw-vcl-feedback-loop.git
 cd openclaw-vcl-feedback-loop
 ```
 
-#### 2) Create a local config
+#### 2) Create the local config
 
-If you need the numeric `projectId` for manual config, you can get it from the **Read insights** curl template in the Agent API tab. It appears in the `/projects/<id>/...` part of the URL.
+Save this at:
 
-If you only have the public project slug, you can also resolve it via:
-
-```bash
-curl https://vibecodinglist.com/api/projects/by-slug/<slug>
+```text
+~/.openclaw/workspace/.openclaw/vcl-feedback-loop.json
 ```
 
-The returned JSON includes the top-level `id`.
-
-The simplest manual config is:
+Minimal config:
 
 ```json
 {
@@ -116,13 +112,7 @@ The simplest manual config is:
 }
 ```
 
-Save it at:
-
-```text
-~/.openclaw/workspace/.openclaw/vcl-feedback-loop.json
-```
-
-If you want Telegram alerts too, add:
+Add this if you also want Telegram alerts through OpenClaw:
 
 ```json
 {
@@ -137,50 +127,20 @@ If you want Telegram alerts too, add:
 }
 ```
 
-#### 3) Optional: bootstrap from the Read insights curl template
+Notes:
+- get `projectId` from the Agent API **Read insights** curl template (`/projects/<id>/...`)
+- or resolve a public slug with `curl https://vibecodinglist.com/api/projects/by-slug/<slug>`
+- Telegram delivery uses **OpenClaw routing**, so OpenClaw must already have a reachable Telegram account connected
 
-If you prefer, you can still bootstrap from the **Read insights** curl template from the Agent API tab:
+#### 3) Optional: bootstrap from the Agent API curl template
+
+Instead of writing the config by hand:
 
 ```bash
 node scripts/bootstrap-vcl-feedback-loop.js --curl-file ~/vcl-curl.txt
 ```
 
-That extracts the read URL and project API key automatically and writes the config for you.
-
-#### 4) Verify connectivity
-
-```bash
-node scripts/poll-vcl-feedback.js
-node scripts/poll-vcl-feedback.js --message
-node scripts/poll-vcl-feedback.js --new-message
-```
-
-Expected behavior:
-
-- JSON mode prints counts and the state path
-- `--message` prints current pending items
-- `--new-message` prints only pending items that have not yet been notified
-- if there is nothing pending, message modes print `NO_NEW_FEEDBACK`
-
-#### 5) Wire notifications to OpenClaw
-
-If you already know the destination, put it directly in the config file under `notify`. If you are using the curl-based fallback, you can also include it during bootstrap.
-
-### 6) Connect Telegram
-
-This setup sends notifications through **OpenClaw's Telegram routing**, not by talking to Telegram directly from the script.
-
-That means the important pieces are:
-
-1. OpenClaw already has a Telegram account connected
-2. the connected bot/account can reach the destination chat
-3. you know the Telegram target chat or user id if the agent cannot infer it automatically
-4. the VCL loop config includes:
-   - `channel: telegram`
-   - `target: <CHAT_ID>`
-   - usually `account: default`
-
-You can bake that in during bootstrap:
+Or include Telegram settings during bootstrap:
 
 ```bash
 node scripts/bootstrap-vcl-feedback-loop.js \
@@ -190,46 +150,35 @@ node scripts/bootstrap-vcl-feedback-loop.js \
   --account default
 ```
 
-Or edit the config later:
+#### 4) Verify polling
 
-```json
-{
-  "baseUrl": "https://YOUR-VCL-HOST",
-  "projectId": 26,
-  "apiKey": "YOUR_VCL_PROJECT_API_KEY",
-  "notify": {
-    "channel": "telegram",
-    "target": "CHAT_ID",
-    "account": "default"
-  }
-}
+```bash
+node scripts/poll-vcl-feedback.js
+node scripts/poll-vcl-feedback.js --message
+node scripts/poll-vcl-feedback.js --new-message
 ```
 
-If the user wants the setup mostly by chat, the practical prompt is something like:
+Expected:
+- default mode prints JSON counts and state path
+- `--message` prints current pending items
+- `--new-message` prints only not-yet-notified pending items
+- message modes print `NO_NEW_FEEDBACK` when nothing is pending
 
-```text
-Set this up with VCL alerts to my Telegram chat. My Telegram is already connected to OpenClaw.
-```
-
-If the Telegram account is not connected yet, handle that first in OpenClaw, then come back and finish the VCL loop setup. If the agent still cannot infer the destination, provide the numeric chat id.
-
-### 7) Test notification delivery
+#### 5) Send a test notification
 
 ```bash
 node scripts/poll-vcl-feedback.js --notify-openclaw
 ```
 
-This sends only **pending items that have not yet been marked as notified**.
+#### 6) Handle responses
 
-### 8) Handle a response
-
-Ack a handled item directly:
+Ack directly:
 
 ```bash
 node scripts/ack-vcl-feedback.js 24
 ```
 
-Or use the response parser:
+Or parse simple chat responses:
 
 ```bash
 node scripts/handle-vcl-response.js "OK 24"
