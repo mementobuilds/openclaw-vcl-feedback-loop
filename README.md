@@ -9,8 +9,8 @@ This repo now covers both sides of the loop:
    - detect what is new or still pending
    - notify a human through OpenClaw
 2. **Write back to VCL**
-   - reply inside feedback threads
-   - ask clarifying questions
+   - reply inside feedback threads when the source type supports replies
+   - ask clarifying questions on replyable feedback threads
    - post changelog / update entries
    - link shipped updates back to the feedback that influenced them
 
@@ -71,8 +71,8 @@ https://github.com/me/my-project
 I want Telegram alerts.
 I want approved fixes to be implemented, committed, deployed,
 and only marked as shipped after the live public deployment is verified.
-Then post back to VCL as thread replies and changelog updates
-linked to the feedback ids that influenced them.
+Then post back to VCL as thread replies when the source supports replies,
+and post changelog updates linked to the feedback ids that influenced them.
 
 If anything is missing, figure out what you can automatically
 and ask me only for the remaining required inputs.
@@ -204,6 +204,8 @@ node scripts/handle-vcl-response.js "HOLD 24"
 node scripts/handle-vcl-response.js "ASK 24 Could you clarify whether this issue is mobile-only?"
 ```
 
+Note: `ASK` / thread replies are for replyable VCL feedback threads. Mission-submission findings can still be approved and shipped, but they should skip the reply step and use a changelog / update post instead.
+
 Post back into VCL:
 
 ```bash
@@ -219,7 +221,7 @@ Use these reply conventions:
 
 - `OK 24` → approved for implementation
 - `HOLD 24` → do not implement now, but stop reminders
-- `ASK 24 <question>` → ask a clarifying question back in the VCL thread
+- `ASK 24 <question>` → ask a clarifying question back in the VCL thread when that source supports replies
 
 If more than one item is pending, include the id.
 
@@ -231,6 +233,7 @@ If more than one item is pending, include the id.
 - do not auto-approve feedback
 - do not auto-implement code changes without explicit human approval
 - do not mark a change as shipped until live deploy verification has passed
+- do not attempt thread replies for non-replyable source types such as `mission_submission`; use changelog / update posts instead
 - do not embed an LLM inside the polling loop
 
 ---

@@ -83,14 +83,16 @@ That deploy path can be Railway, Vercel, Netlify, GitHub Actions, a VPS, or a lo
 
 - `OK <id>` → approved for implementation
 - `HOLD <id>` → stop reminders but do not implement
-- `ASK <id> <question>` → post a clarification question back into the VCL thread
+- `ASK <id> <question>` → post a clarification question back into the VCL thread when the source supports replies
+
+Mission-submission findings are a special case: they can still be approved with `OK` / `HOLD`, and they can still get a shipped changelog/update after verification, but they should skip thread replies because VCL does not expose a reply target for them.
 
 Only after explicit approval should downstream implementation/deploy automation run.
 Do not post the shipped reply, changelog update, or final ack until the live public deployment has been verified.
 
 ## Changelog linkage
 
-When posting a changelog entry, use `--linked-feedback-ids` so VCL can show which feedback influenced the shipped update.
+When posting a changelog entry, use `--linked-feedback-ids` so VCL can show which feedback influenced the shipped update. This still applies when the originating item is a mission submission, even though the thread reply step should be skipped.
 
 Example:
 

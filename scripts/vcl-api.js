@@ -96,8 +96,8 @@ function extractFeedbackId(result) {
   return result.feedbackId || result.id || result.sourceId || result?.feedback?.id || null;
 }
 
-function recordAuthoredReply(statePath, result, content) {
-  const state = readJson(statePath, {
+function getState(statePath) {
+  return readJson(statePath, {
     ackedKeys: [],
     pendingFindings: [],
     pendingReplies: [],
@@ -108,6 +108,10 @@ function recordAuthoredReply(statePath, result, content) {
     lastFeedFingerprint: null,
     feedKind: null
   });
+}
+
+function recordAuthoredReply(statePath, result, content) {
+  const state = getState(statePath);
 
   const authoredSourceIds = new Set((state.authoredSourceIds || []).map((value) => String(value)));
   const authoredTexts = new Set((state.authoredTexts || []).map(normalizeText).filter(Boolean));
@@ -120,6 +124,37 @@ function recordAuthoredReply(statePath, result, content) {
     authoredSourceIds: Array.from(authoredSourceIds).slice(-200),
     authoredTexts: Array.from(authoredTexts).slice(-200)
   });
+}
+
+function inferSourceItem(statePath, feedbackId) {
+  const state = getState(statePath);
+  const targetId = String(feedbackId);
+  const candidates = [
+    ...(state.pendingFindings || []),
+    ...(state.pendingReplies || []),
+    ...(state.history || [])
+  ];
+
+  for (const item of candidates) {
+    if (String(item?.sourceId) === targetId && item?.sourceType) {
+      return item;
+    }
+  }
+
+  if (state.lastFeedFingerprint) {
+    try {
+      const items = JSON.parse(state.lastFeedFingerprint);
+      for (const item of items) {
+        if (String(item?.sourceId) === targetId && item?.sourceType) {
+          return item;
+        }
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 async function postFeedback(config, { content, parentId = null, type = 'comment' }) {
@@ -167,6 +202,11 @@ async function main() {
   if (command === 'reply') {
     const parentId = requireArg('--parent-id', parseArgValue('--parent-id'));
     const content = requireArg('--content', parseArgValue('--content'));
+    const explicitSourceType = parseArgValue('--source-type');
+    const sourceType = explicitSourceType || inferSourceItem(config.statePath, parentId)?.sourceType || null;
+    if (sourceType === 'mission_submission') {
+      throw new Error('Mission submissions do not support VCL thread replies. Post a changelog/update instead.');
+    }
     const result = await postFeedback(config, { parentId, content, type: 'comment' });
     recordAuthoredReply(config.statePath, result, content);
     process.stdout.write(JSON.stringify({ ok: true, action: 'reply', parentId: Number(parentId), result }, null, 2));
@@ -192,7 +232,7 @@ async function main() {
 
   console.error([
     'Usage:',
-    '  node scripts/vcl-api.js reply --parent-id <id> --content "..."',
+    '  node scripts/vcl-api.js reply --parent-id <id> --content "..." [--source-type <type>]',
     '  node scripts/vcl-api.js ask --content "..."',
     '  node scripts/vcl-api.js changelog --content "- Fixed ..." [--feedback-request "..."] [--linked-feedback-ids "456,789"]'
   ].join('\n'));

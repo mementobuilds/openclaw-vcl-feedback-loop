@@ -134,8 +134,17 @@ function ackBySourceId(statePath, id) {
   return true;
 }
 
+function getState(statePath) {
+  return readJson(statePath, {
+    pendingFindings: [],
+    pendingReplies: [],
+    history: [],
+    lastFeedFingerprint: null
+  });
+}
+
 function getPendingFindings(statePath) {
-  const state = readJson(statePath, { pendingFindings: [] });
+  const state = getState(statePath);
   return (state.pendingFindings || []).filter(Boolean);
 }
 
@@ -145,6 +154,37 @@ function resolveFeedbackId(statePath, requestedId) {
   if (pending.length === 1) return String(pending[0].sourceId);
   if (!pending.length) throw new Error('No pending feedback items to infer an id from');
   throw new Error(`Multiple pending feedback items exist; specify an id (${pending.map((item) => item.sourceId).join(', ')})`);
+}
+
+function inferSourceItem(statePath, feedbackId) {
+  const state = getState(statePath);
+  const targetId = String(feedbackId);
+  const candidates = [
+    ...(state.pendingFindings || []),
+    ...(state.pendingReplies || []),
+    ...(state.history || [])
+  ];
+
+  for (const item of candidates) {
+    if (String(item?.sourceId) === targetId && item?.sourceType) {
+      return item;
+    }
+  }
+
+  if (state.lastFeedFingerprint) {
+    try {
+      const items = JSON.parse(state.lastFeedFingerprint);
+      for (const item of items) {
+        if (String(item?.sourceId) === targetId && item?.sourceType) {
+          return item;
+        }
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 function parseInput(text) {
@@ -194,6 +234,11 @@ async function main() {
     const acked = ackBySourceId(config.statePath, id);
     process.stdout.write(JSON.stringify({ ok: true, action: 'hold', feedbackId: Number(id), acked }, null, 2));
     return;
+  }
+
+  const sourceItem = inferSourceItem(config.statePath, id);
+  if (sourceItem?.sourceType === 'mission_submission') {
+    throw new Error('Mission submissions do not support VCL thread replies. Use OK/HOLD for approval state and, after shipping, post a changelog/update instead of ASK/reply.');
   }
 
   const result = await postFeedbackReply(config, parsed.remainder, id);
