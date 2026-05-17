@@ -30,6 +30,7 @@ The agent should then ask only for the missing inputs, usually:
 - the Telegram destination chat/user id, if it cannot infer it
 - the target project repo URL
 - the preferred deploy target or deploy script details, if they are not already discoverable
+- whether public X/Twitter feedback should be checked with TweetClaw
 
 ## What the user needs to do in VCL first
 
@@ -46,6 +47,22 @@ The agent should then ask only for the missing inputs, usually:
 7. If you want full implementation + deploy flow, give the agent access to the target project repo and make sure there is a deploy path it can trigger from CLI.
 
 Fallback: if needed, the user can also copy the **Read insights** curl template from that page.
+
+## Optional public X/Twitter feedback
+
+For launches that collect feedback outside VCL, the agent can install
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw) as a separate OpenClaw
+plugin:
+
+```bash
+openclaw plugins install @xquik/tweetclaw
+```
+
+Use it for search tweets, search tweet replies, follower export, user lookup,
+and monitor tweets around the project or launch announcement. Treat those
+signals as extra review context; keep VCL as the approval and changelog system.
+Store the Xquik API key only in TweetClaw's OpenClaw plugin config, not in the
+VCL feedback-loop config.
 
 ## What the agent should do next
 

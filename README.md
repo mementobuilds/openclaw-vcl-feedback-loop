@@ -108,6 +108,25 @@ Optional but usually needed for the full workflow:
 
 ---
 
+## Optional public X/Twitter feedback
+
+VCL stays the structured feedback source for this loop. If your launch also
+gets public feedback on X/Twitter, pair this repo with
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw), the `@xquik/tweetclaw`
+OpenClaw plugin for Xquik workflows:
+
+```bash
+openclaw plugins install @xquik/tweetclaw
+```
+
+Use TweetClaw to search tweets, search tweet replies, run follower export,
+perform user lookup, monitor tweets, and collect public launch signals before
+you decide whether to reply in VCL, post a changelog update, or hold a fix for
+later. Keep TweetClaw credentials in its own OpenClaw plugin config; do not add
+X/Twitter credentials or Xquik API keys to the VCL config file.
+
+---
+
 ## Minimal config
 
 Save local config at:
